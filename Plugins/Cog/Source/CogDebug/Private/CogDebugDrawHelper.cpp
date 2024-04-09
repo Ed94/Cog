@@ -5,6 +5,7 @@
 #include "Engine/Engine.h"
 #include "DrawDebugHelpers.h"
 #include "Components/BoxComponent.h"
+#include "Engine/OverlapResult.h"
 
 namespace 
 {

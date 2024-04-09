@@ -58,75 +58,75 @@ public:
 
     void Query() const;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category="Cog")
     bool TickInEditor = false;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category="Cog")
     ECogEngine_CollisionQueryType Type = ECogEngine_CollisionQueryType::LineTrace;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category="Cog")
     ECogEngine_CollisionQueryMode Mode = ECogEngine_CollisionQueryMode::Multi;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category="Cog")
     ECogEngine_CollisionQueryBy By = ECogEngine_CollisionQueryBy::Channel;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category="Cog")
     ECogEngine_CollisionQueryShape Shape = ECogEngine_CollisionQueryShape::Sphere;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category="Cog")
     bool TraceComplex = false;
 
     UPROPERTY()
     int32 ObjectTypesToQuery = 0;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category="Cog")
     TEnumAsByte<ECollisionChannel> Channel = ECC_WorldStatic;
 
     UPROPERTY()
     int32 ProfileIndex = 0;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category="Cog")
     FVector ShapeExtent = FVector(100, 100, 100);
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category="Cog")
     bool DrawHitLocations = true;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category="Cog")
     bool DrawHitImpactPoints = true;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category="Cog")
     bool DrawHitShapes = true;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category="Cog")
     bool DrawHitNormals = true;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category="Cog")
     bool DrawHitImpactNormals = true;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category="Cog")
     bool DrawHitPrimitives = true;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category="Cog")
     bool DrawHitActorsNames = false;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category="Cog")
     float HitPointSize = 5.0f;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category="Cog")
     FColor NoHitColor = FColor::Red;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category="Cog")
     FColor HitColor = FColor::Green;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category="Cog")
     FColor NormalColor = FColor::Yellow;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category="Cog")
     FColor ImpactNormalColor = FColor::Cyan;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category="Cog")
     USceneComponent* StartComponent = nullptr;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category="Cog")
     USceneComponent* EndComponent = nullptr;
 };

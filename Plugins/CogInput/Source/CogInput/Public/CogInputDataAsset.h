@@ -15,6 +15,6 @@ class COGINPUT_API UCogInputDataAsset : public UPrimaryDataAsset
 public:
     UCogInputDataAsset() {}
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category="Cog")
     TArray<TObjectPtr<const UInputMappingContext>> MappingContexts;
 };

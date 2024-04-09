@@ -11,10 +11,10 @@ struct COGENGINE_API FCogEngineSpawnEntry
 {
     GENERATED_BODY()
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category="Cog")
     TSubclassOf<AActor> Class;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category="Cog")
     TObjectPtr<const UObject> Asset = nullptr;
 };
 
@@ -24,13 +24,13 @@ struct COGENGINE_API FCogEngineSpawnGroup
 {
     GENERATED_BODY()
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category="Cog")
     FString Name;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category="Cog")
     FLinearColor Color = FLinearColor(0.5f, 0.5f, 0.5f, 1.0f);
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category="Cog")
     TArray<FCogEngineSpawnEntry> Spawns;
 };
 

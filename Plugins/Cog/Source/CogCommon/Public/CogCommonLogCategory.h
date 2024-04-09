@@ -11,7 +11,7 @@ struct COGCOMMON_API FCogLogCategory
 
     FCogLogCategory() {}
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Cog")
     FName Name;
 
     FString GetName() const { return Name.ToString(); }
