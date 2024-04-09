@@ -1,4 +1,14 @@
 # Cog
+
+## FORK OF ORIGINAL
+
+This fork is setup to build as an engine plugin (and most likely also work fine as a regular project plugin)
+
+It depends on: [UE_ImGui](https://github.com/Ed94/UE_ImGui) which is a fork of [Vescodes's ImGui](https://github.com/VesCodes/ImGui) for Unreal.
+This repo no longer has the Imgui libraries they are sourced from the latter's Thirdparty directory.
+
+## Original Readme
+
 Cog is a set of debug tools for Unreal Engine built on top of [Dear ImGui](https://github.com/ocornut/imgui)
 
 ![Cog](https://github.com/arnaud-jamin/Cog/assets/13844285/21659aea-2cd8-4ef6-b3b0-5795f5f3246b)
