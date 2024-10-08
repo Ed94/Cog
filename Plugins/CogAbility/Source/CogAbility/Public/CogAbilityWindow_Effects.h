@@ -2,8 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "ActiveGameplayEffectHandle.h"
+#include "CogCommonConfig.h"
 #include "CogWindow.h"
-#include "CogWindowConfig.h"
 #include "imgui.h"
 #include "CogAbilityWindow_Effects.generated.h"
 
@@ -48,6 +48,8 @@ protected:
 
     virtual void RenderPrediction(const FActiveGameplayEffect& ActiveEffect, bool Short);
 
+    virtual void RenderInhibition(const FActiveGameplayEffect& ActiveEffect, bool Short);
+
     virtual FString GetEffectName(const UGameplayEffect& Effect);
     
     virtual FString GetEffectNameSafe(const UGameplayEffect* Effect);
@@ -71,7 +73,7 @@ protected:
 
 //--------------------------------------------------------------------------------------------------------------------------
 UCLASS(Config = Cog)
-class UCogAbilityConfig_Effects : public UCogWindowConfig
+class UCogAbilityConfig_Effects : public UCogCommonConfig
 {
     GENERATED_BODY()
 
