@@ -26,19 +26,19 @@ protected:
 
     virtual void RenderContent() override;
 
-    static void RenderPlotsList(TArray<FCogDebugPlotEntry*>& VisiblePlots);
+    virtual void RenderAllEntriesNames(const ImVec2& InSize);
 
-    void RenderPlots(const TArray<FCogDebugPlotEntry*>& VisiblePlots) const;
+    virtual void RenderEntryName(const int Index, FCogDebugPlotEntry& Entry);
 
-    void RenderMenu();
+    virtual void RenderPlots(const TArray<FCogDebugPlotEntry*>& VisiblePlots) const;
 
-    void RenderTimeMarker() const;
+    virtual void RenderMenu();
 
-    static void RenderValues(FCogDebugPlotEntry& Entry, const char* Label);
+    virtual void RenderValues(FCogDebugPlotEntry& Entry, const char* Label) const;
 
-    void RenderEvents(FCogDebugPlotEntry& Entry, const char* Label, const ImVec2& PlotMin, const ImVec2& PlotMax) const;
+    virtual void RenderEvents(FCogDebugPlotEntry& Entry, const char* Label, const ImVec2& PlotMin, const ImVec2& PlotMax) const;
 
-    static void RenderEventTooltip(const FCogDebugPlotEvent* HoveredEvent, FCogDebugPlotEntry& Entry);
+    static void RenderEventTooltip(const FCogDebugPlotEvent* HoveredEvent, const FCogDebugPlotEntry& Entry);
 
     TObjectPtr<UCogEngineConfig_Plots> Config = nullptr;
 
@@ -57,14 +57,41 @@ class UCogEngineConfig_Plots : public UCogCommonConfig
 public:
 
     UPROPERTY(Config)
-    int Rows = 1;
+    int NumGraphs = 1;
 
     UPROPERTY(Config)
-    float TimeRange = 10.0f;
+    int NumYAxis = 1;
+
+    UPROPERTY(Config)
+    float TimeRange = 20.0f;
+
+    UPROPERTY(Config)
+    bool ShowTimeBarAtGameTime = true;
+
+    UPROPERTY(Config)
+    bool ShowTimeBarAtCursor = true;
+
+    UPROPERTY(Config)
+    bool ShowValueAtCursor = true;
+
+    UPROPERTY(Config)
+    float DragPauseSensitivity = 10.0f;
+
+    UPROPERTY(Config)
+    FColor PauseBackgroundColor = FColor(10, 0, 0, 255);
+
+    UPROPERTY(Config)
+    bool DockEntries = false;
 
     virtual void Reset() override
     {
-        Rows = 1;
-        TimeRange = 10.0f;
+        NumGraphs = 1;
+        TimeRange = 20.0f;
+        ShowTimeBarAtGameTime = true;
+        ShowTimeBarAtCursor = true;
+        ShowValueAtCursor = true;
+        DragPauseSensitivity = 10.0f;
+        PauseBackgroundColor = FColor(10, 0, 0, 255);
+        DockEntries = false;
     }
 };

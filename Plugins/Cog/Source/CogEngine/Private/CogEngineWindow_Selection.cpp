@@ -2,9 +2,11 @@
 
 #include "CogDebug.h"
 #include "CogEngineHelper.h"
+#include "CogEngineReplicator.h"
 #include "CogEngineWindow_ImGui.h"
 #include "CogImguiHelper.h"
 #include "CogImguiInputHelper.h"
+#include "CogWindowConsoleCommandManager.h"
 #include "CogWindowManager.h"
 #include "CogWindowWidgets.h"
 #include "Components/PrimitiveComponent.h"
@@ -27,11 +29,14 @@ void FCogEngineWindow_Selection::Initialize()
 
     Config = GetConfig<UCogEngineConfig_Selection>();
 
-    ConsoleCommands.Add(IConsoleManager::Get().RegisterConsoleCommand(
+    FCogWindowConsoleCommandManager::RegisterWorldConsoleCommand(
         *ToggleSelectionModeCommand,
         TEXT("Toggle the actor selection mode"),
-        FConsoleCommandWithArgsDelegate::CreateLambda([this](const TArray<FString>& Args) { ToggleSelectionMode(); }),
-        ECVF_Cheat));
+        GetWorld(),
+        FCogWindowConsoleCommandDelegate::CreateLambda([this](const TArray<FString>& InArgs, UWorld* InWorld)
+        {
+            ToggleSelectionMode();
+        }));
 
     TryReapplySelection();
 }
@@ -50,10 +55,6 @@ void FCogEngineWindow_Selection::RenderHelp()
 //--------------------------------------------------------------------------------------------------------------------------
 void FCogEngineWindow_Selection::Shutdown()
 {
-    for (IConsoleObject* ConsoleCommand : ConsoleCommands)
-    {
-        IConsoleManager::Get().UnregisterConsoleObject(ConsoleCommand);
-    }
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
@@ -75,7 +76,7 @@ void FCogEngineWindow_Selection::PreSaveConfig()
 //--------------------------------------------------------------------------------------------------------------------------
 void FCogEngineWindow_Selection::TryReapplySelection() const
 {
-	const UWorld* World = GetWorld();
+    const UWorld* World = GetWorld();
     if (World == nullptr)
     {
         return;
@@ -139,7 +140,7 @@ void FCogEngineWindow_Selection::ActivateSelectionMode()
     bSelectionModeActive = true;
     bIsInputEnabledBeforeEnteringSelectionMode = GetOwner()->GetContext().GetEnableInput();
     GetOwner()->GetContext().SetEnableInput(true);
-    GetOwner()->SetHideAllWindows(true);
+    GetOwner()->SetActivateSelectionMode(true);
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
@@ -161,7 +162,7 @@ void FCogEngineWindow_Selection::DeactivateSelectionMode()
     //--------------------------------------------------------------------------------------------
     GetOwner()->GetContext().SetEnableInput(bIsInputEnabledBeforeEnteringSelectionMode);
 
-    GetOwner()->SetHideAllWindows(false);
+    GetOwner()->SetActivateSelectionMode(false);
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
@@ -204,7 +205,14 @@ void FCogEngineWindow_Selection::RenderContent()
         if (ImGui::BeginMenu("Options"))
         {
             ImGui::Checkbox("Save selection", &Config->bReapplySelection);
+            ImGui::SetItemTooltip("Should the last selection be saved and reapplied on startup.");
+
             ImGui::Checkbox("Actor Name Use Label", &FCogDebug::Settings.ActorNameUseLabel);
+            ImGui::SetItemTooltip("Should actor names be displayed using their label. Labels are more readable.");
+
+            ImGui::Checkbox("Replicate Selection", &FCogDebug::Settings.ReplicateSelection);
+            ImGui::SetItemTooltip("Should the client replicate its actor selection to the server.");
+
             ImGui::EndMenu();
         }
 
@@ -219,7 +227,14 @@ void FCogEngineWindow_Selection::RenderContent()
 //--------------------------------------------------------------------------------------------------------------------------
 bool FCogEngineWindow_Selection::DrawSelectionCombo()
 {
-    return FCogWindowWidgets::ActorsListWithFilters(*GetWorld(), ActorClasses, Config->SelectedClassIndex, &Filter, GetLocalPlayerPawn());
+    AActor* NewSelection = nullptr;
+    const bool result = FCogWindowWidgets::ActorsListWithFilters(NewSelection, *GetWorld(), ActorClasses, Config->SelectedClassIndex, &Filter, GetLocalPlayerPawn());
+    if (result)
+    {
+        SetGlobalSelection(NewSelection);
+    }
+
+    return result;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
@@ -254,7 +269,15 @@ void FCogEngineWindow_Selection::TickSelectionMode()
 
     AActor* HoveredActor = nullptr;
     FVector WorldOrigin, WorldDirection;
-    if (UGameplayStatics::DeprojectScreenToWorld(PlayerController, FCogImguiHelper::ToFVector2D(ImGui::GetMousePos() - ViewportPos), WorldOrigin, WorldDirection))
+    
+    //-----------------------------------------------------------------------------------------------
+    // Do not use imgui mouse pos because when connected to NetImgui, the mouse position is invalid.
+    // See https://github.com/sammyfreg/netImgui/issues/61
+    //-----------------------------------------------------------------------------------------------
+    //ImVec2 mousePos = ImGui::GetMousePos();
+    ImVec2 mousePos = GetOwner()->GetContext().GetImguiMousePos();
+
+    if (UGameplayStatics::DeprojectScreenToWorld(PlayerController, FCogImguiHelper::ToFVector2D(mousePos - ViewportPos), WorldOrigin, WorldDirection))
     {
         //--------------------------------------------------------------------------------------------------------
         // Prioritize another actor than the selected actor unless we only touch the selected actor.
@@ -345,7 +368,19 @@ void FCogEngineWindow_Selection::RenderMainMenuWidget(int32 SubWidgetIndex, floa
     else if (SubWidgetIndex == 1)
     {
         ImGui::SetNextItemWidth(Width);
-        FCogWindowWidgets::MenuActorsCombo("MenuActorSelection", *GetWorld(), ActorClasses, Config->SelectedClassIndex, &Filter, GetLocalPlayerPawn(), [this](AActor& Actor) { RenderActorContextMenu(Actor);  });
+        AActor* NewSelection = nullptr;
+        if (FCogWindowWidgets::MenuActorsCombo(
+            "MenuActorSelection", 
+            NewSelection, 
+            *GetWorld(), 
+            ActorClasses, 
+            Config->SelectedClassIndex, 
+            &Filter, 
+            GetLocalPlayerPawn(), 
+            [this](AActor& Actor) { RenderActorContextMenu(Actor);  }))
+        {
+            SetGlobalSelection(NewSelection);
+        }
     }
     else if (SubWidgetIndex == 2)
     {

@@ -75,15 +75,13 @@ protected:
 
     bool bSelectionModeActive = false;
 
-    bool bIsInputEnabledBeforeEnteringSelectionMode;
+    bool bIsInputEnabledBeforeEnteringSelectionMode = false;
 
     int32 WaitInputReleased = 0;
 
     TArray<TSubclassOf<AActor>> ActorClasses;
 
     ETraceTypeQuery TraceType = TraceTypeQuery1;
-
-    TArray<IConsoleObject*> ConsoleCommands;
 
     TObjectPtr<UCogEngineConfig_Selection> Config;
 

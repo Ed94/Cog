@@ -60,7 +60,7 @@ void FCogWindow::Render(float DeltaTime)
 
     const FString WindowTitle = GetTitle() + "##" + Name;
 
-    if (bHasMenu && bHideMenu == false)
+    if (bHasMenu && bShowMenu)
     {
         WindowFlags |= ImGuiWindowFlags_MenuBar;
     }
@@ -81,10 +81,10 @@ void FCogWindow::Render(float DeltaTime)
         {
             if (bHasMenu)
             {
-                ImGui::Checkbox("Hide Menu", &bHideMenu);
+                ImGui::Checkbox("Show Menu", &bShowMenu);
             }
 
-            if (ImGui::Button("Reset"))
+            if (ImGui::Button("Reset Settings"))
             {
                 ResetConfig();
             }
@@ -136,6 +136,17 @@ void FCogWindow::SetSelection(AActor* NewSelection)
 
     CurrentSelection = NewSelection;
     OnSelectionChanged(OldActor, NewSelection);
+}
+
+//--------------------------------------------------------------------------------------------------------------------------
+
+void FCogWindow::SetIsVisible(const bool Value)
+{
+    if (bIsVisible == Value)
+    { return; }
+
+    bIsVisible = Value;
+    OnWindowVisibilityChanged(Value);
 }
 
 //--------------------------------------------------------------------------------------------------------------------------

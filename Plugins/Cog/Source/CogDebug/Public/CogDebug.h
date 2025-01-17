@@ -13,7 +13,7 @@ struct FCogDebugDrawOverlapParams;
 struct FCogDebugDrawSweepParams;
 
 UENUM()
-enum ECogDebugRecolorMode : uint8
+enum class ECogDebugRecolorMode : uint8
 {
     None,
     Color,
@@ -28,6 +28,9 @@ struct FCogDebugSettings
 
     UPROPERTY(Config)
     bool bIsFilteringBySelection = true;
+
+    UPROPERTY(Config)
+    bool ReplicateSelection = true;
 
     UPROPERTY(Config)
     bool Persistent = false;
@@ -63,7 +66,7 @@ struct FCogDebugSettings
     float AxesScale = 1.0f;
 
     UPROPERTY(Config)
-    TEnumAsByte<ECogDebugRecolorMode> RecolorMode = None;
+    ECogDebugRecolorMode RecolorMode = ECogDebugRecolorMode::None;
 
     UPROPERTY(Config)
     float RecolorIntensity = 0.0f;
@@ -427,7 +430,13 @@ public:
 
 private:
 
+    static int32 GetPieSessionId();
+
+    static void ReplicateSelection(const UWorld* World, AActor* Value);
+
     static bool IsDebugActiveForObject_Internal(const UObject* WorldContextObject, const AActor* InSelection, bool InIsFilteringBySelection);
 
-    static TWeakObjectPtr<AActor> Selection;
+    static constexpr uint32 MaxPie = 16;
+
+    static TWeakObjectPtr<AActor> Selection[MaxPie];
 };

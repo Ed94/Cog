@@ -21,6 +21,7 @@ Cog provides:
 - Window mangement with persistent configuration and layouts.
 - C++ and Blueprint functions to log and debug draw within Log Categories.
 - Control over the server regarding debug draw, logging, spawning, cheats.
+- NetImgui support to ease the debugging of game server.
 
 General Info:
 - Cog can be used both in editor and package builds. It is disabled by default on shipping builds.
@@ -149,6 +150,15 @@ Used to configure the network emulation
 
 ![Net Emulation](https://github.com/arnaud-jamin/Cog/assets/13844285/97103f15-fae8-4fe9-8189-8fdbcab5cb20)
 
+### NetImgui
+Handle connections to a [NetImgui](https://github.com/sammyfreg/netImgui) server.
+
+![NetImgui](https://github.com/user-attachments/assets/ea1d4a28-4c2f-460c-ac7d-5f6ef8e6e6dd)
+
+The following image shows the editor running along a dedicated server. The NetImgui server displays the dedicated server imgui windows. 
+This can be used to debug the state of the game server. For example the behavior trees are only available on the game server.
+![image](https://github.com/user-attachments/assets/3cd788c9-9884-4c1c-8333-7a311bdcd20a)
+
 ### Output Log
 Display the output log based on each log categories verbosity.
     
@@ -258,7 +268,7 @@ Log and debug draw functions can be filtered by the selected actor.
 
 ### Testing the sample
 
-You must have Unreal 5.1 or greater and Visual Studio to launch the sample
+You must have Unreal 5.5 or greater and Visual Studio to launch the sample
 
 1. Download the code
 2. Right Click `Cog.uproject` and click `Generate Visual Studio project files`
@@ -272,7 +282,7 @@ You must have Unreal 5.1 or greater and Visual Studio to launch the sample
 ### Integrating Cog in your project
 
 The Cog repository has the following structure:
-- `CogSample` - A Sample that demonstrate various Cog functionalities. The project was saved in Unreal 5.1
+- `CogSample` - A Sample that demonstrate various Cog functionalities. The project was saved in Unreal 5.5
 - `Plugins/CogAbility` - ImGui windows for the Gameplay Ability System (Abilities, Effects, Tags, ...)
 - `Plugins/CogAI` - ImGui windows for AI (Behavior Tree, Blackboard)
 - `Plugins/CogInput` - ImGui windows for the Enhanced Input library (Input action, Gamepad)
@@ -455,9 +465,4 @@ class ACogSamplePlayerController
 ![Data Assets](https://github.com/arnaud-jamin/Cog/assets/13844285/cbda8065-c921-41a6-b06e-4302d8c72989)
 
 ![Data Assets](https://github.com/arnaud-jamin/Cog/assets/13844285/1f4f3255-4104-4dfc-ab9e-fd34335c0289)
-
-Currently, Cog does not properly work when running under a single process in multiplayer mode. You might want to disable the setting `Editor Preferences - Run Under One Process`:
-
-![image](https://github.com/arnaud-jamin/Cog/assets/13844285/6079b71c-bd41-4193-b3c6-aa76a70984e5)
-
 

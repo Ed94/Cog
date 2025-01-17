@@ -36,6 +36,7 @@ public:
 
     virtual void Tick(float DeltaTime);
 
+
     virtual void AddWindow(FCogWindow* Window, const FString& Name, bool AddToMainMenu = true);
 
     template<class T>
@@ -51,9 +52,9 @@ public:
 
     virtual void SaveLayout(int32 LayoutIndex);
 
-    virtual bool GetHideAllWindows() const { return bHideAllWindows; }
+    virtual bool GetHideAllWindows() const { return bIsSelectionModeActive; }
 
-    virtual void SetHideAllWindows(bool Value);
+    virtual void SetActivateSelectionMode(bool Value);
 
     virtual void ResetAllWindowsConfig();
 
@@ -101,9 +102,11 @@ protected:
 
     virtual void RenderMenuItem(FCogWindow& Window, const char* MenuItemName);
 
-    void RenderMenuItemHelp(FCogWindow& Window);
+    virtual void RenderMenuItemHelp(FCogWindow& Window);
 
     virtual void ToggleInputMode();
+
+    virtual void DisableInputMode();
 
     static void SettingsHandler_ClearAll(ImGuiContext* ctx, ImGuiSettingsHandler*);
 
@@ -116,6 +119,8 @@ protected:
     static void SettingsHandler_WriteAll(ImGuiContext* ctx, ImGuiSettingsHandler* handler, ImGuiTextBuffer* buf);
 
     static FString ToggleInputCommand;
+
+    static FString DisableInputCommand;
     
     static FString LoadLayoutCommand;
     
@@ -150,13 +155,11 @@ protected:
 
     int32 LayoutToLoad = -1;
 
-    int32 HideAllWindowsCounter = 0;
+    int32 SelectionModeActiveCounter = 0;
 
-    bool bHideAllWindows = false;
+    bool bIsSelectionModeActive = false;
 
     bool IsInitialized = false;
-
-    TArray<IConsoleObject*> ConsoleCommands;
 };
 
 //--------------------------------------------------------------------------------------------------------------------------

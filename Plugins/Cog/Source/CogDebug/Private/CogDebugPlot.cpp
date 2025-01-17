@@ -1,7 +1,6 @@
 #include "CogDebugPlot.h"
 
 #include "CogDebug.h"
-#include "CogDebugDraw.h"
 #include "CogDebugHelper.h"
 #include "CogImguiHelper.h"
 #include "Engine/Engine.h"
@@ -9,24 +8,28 @@
 
 FCogDebugPlotEvent FCogDebugPlot::DefaultEvent;
 TArray<FCogDebugPlotEntry> FCogDebugPlot::Plots;
+TArray<FCogDebugPlotEntry> FCogDebugPlot::Events;
 bool FCogDebugPlot::IsVisible = false;
 bool FCogDebugPlot::Pause = false;
 FName FCogDebugPlot::LastAddedEventPlotName = NAME_None;
 int32 FCogDebugPlot::LastAddedEventIndex = INDEX_NONE;
+TMap<int32, TMap<int32, int32>> FCogDebugPlot::OccupationMap;
 
 //--------------------------------------------------------------------------------------------------------------------------
 // FCogPlotEvent
 //--------------------------------------------------------------------------------------------------------------------------
 float FCogDebugPlotEvent::GetActualEndTime(const FCogDebugPlotEntry& Plot) const
 {
-    const float ActualEndTime = EndTime == 0.0f ? Plot.Time : EndTime;
+    const UWorld* World = Plot.World.Get();
+    const float WorldTime = World != nullptr ? World->GetTimeSeconds() : 0.0f;
+    const float ActualEndTime = EndTime != 0.0f ? EndTime : WorldTime;
     return ActualEndTime;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
 uint64 FCogDebugPlotEvent::GetActualEndFrame(const FCogDebugPlotEntry& Plot) const
 {
-    const float ActualEndFame = EndFrame == 0.0f ? Plot.Frame : EndFrame;
+    const float ActualEndFame = EndFrame != 0.0f ? EndFrame : GFrameCounter;
     return ActualEndFame;
 }
 
@@ -119,9 +122,8 @@ void FCogDebugPlotEntry::AddPoint(float X, float Y)
 
 //--------------------------------------------------------------------------------------------------------------------------
 FCogDebugPlotEvent& FCogDebugPlotEntry::AddEvent(
-    const FCogDebugPlotEntry& OwnwePlot,
-    FString OwnerName,
-    bool IsInstant,
+    const FString& OwnerName,
+    const bool IsInstant,
     const FName EventId,
     const int32 Row,
     const FColor& Color)
@@ -131,10 +133,9 @@ FCogDebugPlotEvent& FCogDebugPlotEntry::AddEvent(
         Events.Reserve(200);
     }
 
-    //-----------------------------------------------------------------------
-    // We currently having two events with the same name at the same time.
-    // So we stop the current one if any exist.
-    //-----------------------------------------------------------------------
+    //----------------------------
+    // Stop if it already exist.
+    //----------------------------
     StopEvent(EventId);
 
     FCogDebugPlotEvent* Event = nullptr;
@@ -155,11 +156,16 @@ FCogDebugPlotEvent& FCogDebugPlotEntry::AddEvent(
     Event->Id = EventId;
     Event->OwnerName = OwnerName;
     Event->DisplayName = EventId.ToString();
-    Event->StartTime = OwnwePlot.Time;
-    Event->EndTime = IsInstant ? OwnwePlot.Time : 0.0f;
-    Event->StartFrame = OwnwePlot.Frame;
-    Event->EndFrame = IsInstant ? OwnwePlot.Frame : 0.0f;
-    Event->Row = (Row == FCogDebugPlot::AutoRow) ? OwnwePlot.FindFreeRow() : Row;
+    Event->StartTime = Time;
+    Event->EndTime = IsInstant ? Time : 0.0f;
+    Event->StartFrame = Frame;
+    Event->EndFrame = IsInstant ? Frame : 0.0f;
+    Event->Row = (Row == FCogDebugPlot::AutoRow) ? FCogDebugPlot::FindFreeGraphRow(GraphIndex) : Row;
+
+    if (IsInstant == false)
+    {
+        FCogDebugPlot::OccupyGraphRow(GraphIndex, Event->Row);
+    }
 
     MaxRow = FMath::Max(Event->Row, MaxRow);
 
@@ -168,7 +174,7 @@ FCogDebugPlotEvent& FCogDebugPlotEntry::AddEvent(
     Event->BorderColor = FCogImguiHelper::ToImColor(BorderColor);
     Event->FillColor = FCogImguiHelper::ToImColor(FillColor);
 
-    FCogDebugPlot::LastAddedEventPlotName = OwnwePlot.Name;
+    FCogDebugPlot::LastAddedEventPlotName = Name;
     FCogDebugPlot::LastAddedEventIndex = AddedIndex;
 
     return *Event;
@@ -187,16 +193,11 @@ FCogDebugPlotEvent& FCogDebugPlotEntry::StopEvent(const FName EventId)
     {
         Event->EndTime = Time;
         Event->EndFrame = Frame;
+
+		FCogDebugPlot::FreeGraphRow(GraphIndex, Event->Row);
     }
 
     return *Event;
-}
-
-//--------------------------------------------------------------------------------------------------------------------------
-void FCogDebugPlotEntry::UpdateTime(const UWorld* World)
-{
-    Time = World ? World->GetTimeSeconds() : 0.0;
-    Frame = GFrameCounter;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
@@ -240,65 +241,17 @@ FCogDebugPlotEvent* FCogDebugPlotEntry::FindLastEventByName(FName EventId)
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
-int32 FCogDebugPlotEntry::FindFreeRow() const
+void FCogDebugPlotEntry::AssignGraphAndAxis(int32 InGraph, ImAxis InYAxis)
 {
-    static float InstantTimeThreshold = 1.0f;
-    static float TotalTimeThreshold = 10.0f;
-    TSet<int32> OccupiedRows;
-
-    for (int32 i = Events.Num() - 1; i >= 0; --i)
-    {
-        int32 Index = i;
-        if (EventOffset != 0)
-        {
-            Index = (i + EventOffset) % Events.Num();
-        }
-        const FCogDebugPlotEvent& Event = Events[Index];
-
-        if (Event.EndTime != 0.0f && Time > Event.EndTime + TotalTimeThreshold)
-        {
-            break;
-        }
-
-        if (Event.StartTime == Event.EndTime && Time > Event.EndTime + InstantTimeThreshold)
-        {
-            continue;
-        }
-
-        if (Event.EndTime != 0.0f)
-        {
-            continue;
-        }
-
-        OccupiedRows.Add(Event.Row);
-    }
-
-    int32 FreeRow = 0;
-    while (true)
-    {
-        if (OccupiedRows.Contains(FreeRow) == false)
-        {
-            break;
-        }
-
-        FreeRow++;
-    }
-
-    return FreeRow;
+    GraphIndex = InGraph;
+    YAxis = InYAxis;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
-void FCogDebugPlotEntry::AssignAxis(int32 Row, ImAxis YAxis)
+void FCogDebugPlotEntry::ResetGraphAndAxis()
 {
-    CurrentRow = Row;
-    CurrentYAxis = YAxis;
-}
-
-//--------------------------------------------------------------------------------------------------------------------------
-void FCogDebugPlotEntry::ResetAxis()
-{
-    CurrentRow = INDEX_NONE;
-    CurrentYAxis = ImAxis_COUNT;
+    GraphIndex = INDEX_NONE;
+    YAxis = ImAxis_COUNT;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
@@ -341,7 +294,7 @@ bool FCogDebugPlotEntry::FindValue(float x, float& y) const
             Index = (i + ValueOffset) % Values.size();
         }
 
-        ImVec2 Point = Values[Index];
+        const ImVec2 Point = Values[Index];
         if (Point.x > x)
         {
             FoundAfter = true;
@@ -368,6 +321,8 @@ bool FCogDebugPlotEntry::FindValue(float x, float& y) const
 void FCogDebugPlot::Reset()
 {
     Plots.Empty();
+    Events.Empty();
+    OccupationMap.Empty();
     Pause = false;
     ResetLastAddedEvent();
 }
@@ -375,11 +330,17 @@ void FCogDebugPlot::Reset()
 //--------------------------------------------------------------------------------------------------------------------------
 void FCogDebugPlot::Clear()
 {
-    for (FCogDebugPlotEntry& Entry : FCogDebugPlot::Plots)
+    for (FCogDebugPlotEntry& Entry : Plots)
     {
         Entry.Clear();
     }
 
+    for (FCogDebugPlotEntry& Entry : Events)
+    {
+        Entry.Clear();
+    }
+
+    OccupationMap.Empty();
     ResetLastAddedEvent();
 }
 
@@ -393,7 +354,7 @@ void FCogDebugPlot::ResetLastAddedEvent()
 //--------------------------------------------------------------------------------------------------------------------------
 FCogDebugPlotEvent* FCogDebugPlot::GetLastAddedEvent()
 {
-    FCogDebugPlotEntry* Plot = FindPlot(LastAddedEventPlotName);
+    FCogDebugPlotEntry* Plot = FindEntry(true, LastAddedEventPlotName);
     if (Plot == nullptr)
     {
         return nullptr;
@@ -403,10 +364,27 @@ FCogDebugPlotEvent* FCogDebugPlot::GetLastAddedEvent()
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
-FCogDebugPlotEntry* FCogDebugPlot::FindPlot(const FName Name)
+FCogDebugPlotEntry* FCogDebugPlot::FindEntry(const FName Name)
 {
-    FCogDebugPlotEntry* Plot = Plots.FindByPredicate([Name](const FCogDebugPlotEntry& P) { return P.Name == Name; });
-    return Plot;
+    if (FCogDebugPlotEntry* Event = Events.FindByPredicate([Name](const FCogDebugPlotEntry& P) { return P.Name == Name; }))
+    {
+        return Event;
+    }
+
+    if (FCogDebugPlotEntry* Plot = Plots.FindByPredicate([Name](const FCogDebugPlotEntry& P) { return P.Name == Name; }))
+    {
+        return Plot;
+    }
+
+    return nullptr;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------
+FCogDebugPlotEntry* FCogDebugPlot::FindEntry(bool IsEvent, const FName Name)
+{
+    TArray<FCogDebugPlotEntry>* Entries = IsEvent ? &Events : &Plots;
+    FCogDebugPlotEntry* Entry = Entries->FindByPredicate([Name](const FCogDebugPlotEntry& P) { return P.Name == Name; });
+	return Entry;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
@@ -431,19 +409,20 @@ FCogDebugPlotEntry* FCogDebugPlot::RegisterPlot(const UObject* WorldContextObjec
         return nullptr;
     }
 
-    FCogDebugPlotEntry* EntryPtr = FindPlot(PlotName);
+    FCogDebugPlotEntry* EntryPtr = FindEntry(IsEventPlot, PlotName);
     if (EntryPtr == nullptr)
     {
-        EntryPtr = &Plots.AddDefaulted_GetRef();
+        TArray<FCogDebugPlotEntry>* Entries = IsEventPlot ? &Events : &Plots;
+        EntryPtr = &Entries->AddDefaulted_GetRef();
         EntryPtr->Name = PlotName;
         EntryPtr->IsEventPlot = IsEventPlot;
-        Plots.Sort([](const FCogDebugPlotEntry& A, const FCogDebugPlotEntry& B) { return A.Name.ToString().Compare(B.Name.ToString()) < 0; });
+        Entries->Sort([](const FCogDebugPlotEntry& A, const FCogDebugPlotEntry& B) { return A.Name.ToString().Compare(B.Name.ToString()) < 0; });
     }
 
-    if (EntryPtr->CurrentYAxis == ImAxis_COUNT)
-    {
-        return nullptr;
-    }
+    //if (EntryPtr->YAxis == ImAxis_COUNT)
+    //{
+    //    return nullptr;
+    //}
 
     const float Time = World->GetTimeSeconds();
     if (Time < EntryPtr->Time)
@@ -451,6 +430,7 @@ FCogDebugPlotEntry* FCogDebugPlot::RegisterPlot(const UObject* WorldContextObjec
         EntryPtr->Clear();
     }
 
+    EntryPtr->World = World;
     EntryPtr->Time = World->GetTimeSeconds();
     EntryPtr->Frame = GFrameCounter;
 
@@ -479,7 +459,7 @@ FCogDebugPlotEvent& FCogDebugPlot::PlotEvent(const UObject* WorldContextObject, 
         return DefaultEvent;
     }
 
-    FCogDebugPlotEvent& Event = Plot->AddEvent(*Plot, GetNameSafe(WorldContextObject), IsInstant, EventId, Row, Color);
+    FCogDebugPlotEvent& Event = Plot->AddEvent(GetNameSafe(WorldContextObject), IsInstant, EventId, Row, Color);
     return Event;
 }
 
@@ -522,3 +502,59 @@ FCogDebugPlotEvent& FCogDebugPlot::PlotEventToggle(const UObject* WorldContextOb
         return PlotEventStop(WorldContextObject, PlotName, EventId);
     }
 }
+
+
+//--------------------------------------------------------------------------------------------------------------------------
+void FCogDebugPlot::OccupyGraphRow(const int32 InGraphIndex, const int32 InRow)
+{
+	TMap<int32, int32>& GraphOccupation = OccupationMap.FindOrAdd(InGraphIndex);
+
+    if (int32* RowOccupation = GraphOccupation.Find(InRow))
+    {
+        (*RowOccupation)++;
+    }
+    else
+    {
+        GraphOccupation.Add(InRow, 1);
+    }
+}
+
+//--------------------------------------------------------------------------------------------------------------------------
+void FCogDebugPlot::FreeGraphRow(const int32 InGraphIndex, const int32 Row)
+{
+    TMap<int32, int32>* GraphOccupation = OccupationMap.Find(InGraphIndex);
+    if (GraphOccupation == nullptr)
+    { return; }
+
+    int32* RowOccupation = GraphOccupation->Find(Row);
+    if (RowOccupation == nullptr)
+    { return; }
+
+	(*RowOccupation)--;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------
+int32 FCogDebugPlot::FindFreeGraphRow(const int32 InGraphIndex)
+{
+    constexpr int32 MaxRows = 100;
+
+    int32 FreeRow = 0;
+
+    TMap<int32, int32>* GraphOccupation = OccupationMap.Find(InGraphIndex);
+    if (GraphOccupation == nullptr)
+    {
+        return FreeRow;
+    }
+
+    for (; FreeRow < MaxRows; ++FreeRow)
+    {
+        const int32* Occupation = GraphOccupation->Find(FreeRow);
+        if (Occupation == nullptr || *Occupation == 0)
+        {
+            break;
+        }
+    }
+
+    return FreeRow;
+}
+
