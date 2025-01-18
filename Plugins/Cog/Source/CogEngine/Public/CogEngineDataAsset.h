@@ -39,13 +39,13 @@ struct COGENGINE_API FCogEngineCheat
 {
     GENERATED_BODY()
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "Cog")
     FString Name;
 
-    UPROPERTY(EditAnywhere, Instanced)
+    UPROPERTY(EditAnywhere, Instanced, Category = "Cog")
     TObjectPtr<UCogEngineCheat_Execution> Execution;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "Cog")
     FLinearColor Color = FLinearColor::White;
 
     mutable FLinearColor CustomColor = FLinearColor::White;
