@@ -5,6 +5,7 @@
 #include "CogWindow.h"
 #include "CogEngineWindow_Cheats.generated.h"
 
+class ACogEngineReplicator;
 class AActor;
 class UCogEngineConfig_Cheats;
 class UCogEngineDataAsset;
@@ -23,17 +24,15 @@ protected:
 
     virtual void GameTick(float DeltaTime) override;
 
-    virtual void ResetConfig() override;
-
     virtual void RenderHelp() override;
 
     virtual void RenderContent() override;
 
     virtual void TryReapplyCheats();
 
-    virtual bool AddCheat(const int32 Index, AActor* ControlledActor, AActor* TargetActor, const FCogEngineCheat& CheatEffect, bool IsPersistent);
+    virtual bool AddCheat(ACogEngineReplicator& Replicator, const int32 Index, AActor* ControlledActor, AActor* TargetActor, const FCogEngineCheat& CheatEffect, bool IsPersistent);
 
-    virtual void RequestCheat(AActor* ControlledActor, AActor* SelectedActor, const FCogEngineCheat& Cheat, bool ApplyToEnemies, bool ApplyToAllies, bool ApplyToControlled);
+    virtual void RequestCheat(ACogEngineReplicator& Replicator, AActor* ControlledActor, AActor* SelectedActor, const FCogEngineCheat& Cheat, bool ApplyToEnemies, bool ApplyToAllies, bool ApplyToControlled);
 
     virtual const FCogEngineCheat* FindCheatByName(const FString& CheatName, const bool OnlyPersistentCheats);
 

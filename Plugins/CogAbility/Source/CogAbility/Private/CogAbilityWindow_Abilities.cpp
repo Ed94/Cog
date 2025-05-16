@@ -6,7 +6,7 @@
 #include "CogAbilityHelper.h"
 #include "CogAbilityReplicator.h"
 #include "CogImguiHelper.h"
-#include "CogWindowWidgets.h"
+#include "CogWidgets.h"
 #include "CogDebugRob.h"
 #include "imgui.h"
 
@@ -19,7 +19,6 @@ void FCogAbilityWindow_Abilities::Initialize()
     Super::Initialize();
 
     bHasMenu = true;
-    bNoPadding = true;
 
     Asset = GetAsset<UCogAbilityDataAsset>();
     Config = GetConfig<UCogAbilityConfig_Abilities>();
@@ -32,16 +31,20 @@ void FCogAbilityWindow_Abilities::RenderHelp()
     "This window displays the gameplay abilities of the selected actor. "
     "Click the ability check box to force its activation or deactivation. "
     "Right click an ability to open or close the ability separate window. "
-    "Use the 'Give Ability' menu to manually give an ability from a list defined in the '%s' data asset. "
-    , TCHAR_TO_ANSI(*GetNameSafe(Asset.Get())));
+    );
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
-void FCogAbilityWindow_Abilities::ResetConfig()
+void FCogAbilityWindow_Abilities::PreBegin(ImGuiWindowFlags& WindowFlags)
 {
-    Super::ResetConfig();
+    WindowFlags |= ImGuiWindowFlags_NoScrollbar;
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+}
 
-    Config->Reset();
+//--------------------------------------------------------------------------------------------------------------------------
+void FCogAbilityWindow_Abilities::PostBegin()
+{
+    ImGui::PopStyleVar();
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
@@ -175,7 +178,7 @@ void FCogAbilityWindow_Abilities::RenderAbilitiesMenu(AActor* Selection)
             ImGui::EndMenu();
         }
 
-        FCogWindowWidgets::SearchBar(Filter);
+        FCogWidgets::SearchBar("##Filter", Filter);
 
         ImGui::EndMenuBar();
     }
@@ -193,24 +196,24 @@ void FCogAbilityWindow_Abilities::RenderAbilitiesMenuFilters()
 //--------------------------------------------------------------------------------------------------------------------------
 void FCogAbilityWindow_Abilities::RenderAbilitiesMenuColorSettings()
 {
-    ImGui::ColorEdit4("Active Color", (float*)&Config->ActiveAbilityColor, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
-    ImGui::ColorEdit4("Inactive Color", (float*)&Config->InactiveAbilityColor, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
-    ImGui::ColorEdit4("Blocked Color", (float*)&Config->BlockedAbilityColor, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
-    ImGui::ColorEdit4("Default Tag Color", (float*)&Config->DefaultTagsColor, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
-    ImGui::ColorEdit4("Blocked Tag Color", (float*)&Config->BlockedTagsColor, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
-    ImGui::ColorEdit4("Input Pressed Color", (float*)&Config->InputPressedColor, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
+    ImGui::ColorEdit4("Active Color", &Config->ActiveAbilityColor.X, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
+    ImGui::ColorEdit4("Inactive Color", &Config->InactiveAbilityColor.X, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
+    ImGui::ColorEdit4("Blocked Color", &Config->BlockedAbilityColor.X, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
+    ImGui::ColorEdit4("Default Tag Color", &Config->DefaultTagsColor.X, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
+    ImGui::ColorEdit4("Blocked Tag Color", &Config->BlockedTagsColor.X, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
+    ImGui::ColorEdit4("Input Pressed Color", &Config->InputPressedColor.X, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
 void FCogAbilityWindow_Abilities::RenderAbilityActivation(FGameplayAbilitySpec& Spec)
 {
-    FCogWindowWidgets::PushStyleCompact();
+    FCogWidgets::PushStyleCompact();
     bool IsActive = Spec.IsActive();
     if (ImGui::Checkbox("##Activation", &IsActive))
     {
         AbilityHandleToActivate = Spec.Handle;
     }
-    FCogWindowWidgets::PopStyleCompact();
+    FCogWidgets::PopStyleCompact();
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
@@ -393,10 +396,10 @@ void FCogAbilityWindow_Abilities::RenderAbilitiesTableRow(UAbilitySystemComponen
     //------------------------
     // Popup
     //------------------------
-    if (FCogWindowWidgets::BeginItemTableTooltip())
+    if (FCogWidgets::BeginItemTableTooltip())
     {
         RenderAbilityInfo(AbilitySystemComponent, Spec);
-        FCogWindowWidgets::EndItemTableTooltip();
+        FCogWidgets::EndItemTableTooltip();
     }
 
     //------------------------
@@ -467,7 +470,7 @@ void FCogAbilityWindow_Abilities::RenderAbilityInputPressed(FGameplayAbilitySpec
 {
     if (Spec.InputPressed)
     {
-        FCogWindowWidgets::SmallButton("Pressed", FCogImguiHelper::ToImVec4(Config->ActiveAbilityColor));
+        FCogWidgets::SmallButton("Pressed", FCogImguiHelper::ToImVec4(Config->ActiveAbilityColor));
     }
 }
 
@@ -502,7 +505,7 @@ void FCogAbilityWindow_Abilities::RenderAbilityContextMenu(UAbilitySystemCompone
             AbilityHandleToRemove = Spec.Handle;
         }
 
-        FCogWindowWidgets::OpenObjectAssetButton(Spec.Ability, ButtonsSize);
+        FCogWidgets::OpenObjectAssetButton(Spec.Ability, ButtonsSize);
 
         ImGui::EndPopup();
     }
@@ -573,13 +576,13 @@ void FCogAbilityWindow_Abilities::RenderAbilityInfo(const UAbilitySystemComponen
         ImGui::TableNextColumn();
         ImGui::TextColored(TextColor, "Activation");
         ImGui::TableNextColumn();
-        FCogWindowWidgets::PushStyleCompact();
+        FCogWidgets::PushStyleCompact();
         bool IsActive = Spec.IsActive();
         if (ImGui::Checkbox("##Activation", &IsActive))
         {
             AbilityHandleToActivate = Spec.Handle;
         }
-        FCogWindowWidgets::PopStyleCompact();
+        FCogWidgets::PopStyleCompact();
 
         //------------------------
         // Active Count

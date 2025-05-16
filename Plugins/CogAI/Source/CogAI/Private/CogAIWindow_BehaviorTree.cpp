@@ -8,7 +8,7 @@
 #include "CogAIModule.h"
 #include "CogDebugDraw.h"
 #include "CogImguiHelper.h"
-#include "CogWindowWidgets.h"
+#include "CogWidgets.h"
 #include "GameFramework/Pawn.h"
 #include "imgui_internal.h"
 #include "Navigation/PathFollowingComponent.h"
@@ -135,12 +135,12 @@ void FCogAIWindow_BehaviorTree::RenderContent()
     {
         if (ImGui::BeginMenu("Options"))
         {
-            ImGui::ColorEdit4("Active Color", (float*)&Config->ActiveColor, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
-            ImGui::ColorEdit4("Inactive Color", (float*)&Config->InactiveColor, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
+            ImGui::ColorEdit4("Active Color", &Config->ActiveColor.X, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
+            ImGui::ColorEdit4("Inactive Color", &Config->InactiveColor.X, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
             ImGui::EndMenu();
         }
 
-        FCogWindowWidgets::SearchBar(Filter);
+        FCogWidgets::SearchBar("##Filter", Filter);
 
         ImGui::EndMenuBar();
     }
@@ -269,14 +269,14 @@ void FCogAIWindow_BehaviorTree::RenderNode(UBehaviorTreeComponent& BehaviorTreeC
         //------------------------
         // Tooltip
         //------------------------
-        if (FCogWindowWidgets::BeginItemTableTooltip())
+        if (FCogWidgets::BeginItemTableTooltip())
         {
 	        if (ImGui::BeginTable("Effect", 2, ImGuiTableFlags_Borders))
 	        {
 	            ImGui::TableSetupColumn("Property");
 	            ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
 
-	            const ImVec4 TextColor(1.0f, 1.0f, 1.0f, 0.5f);
+                constexpr ImVec4 TextColor(1.0f, 1.0f, 1.0f, 0.5f);
 
 	            //------------------------
 	            // Name
@@ -328,14 +328,14 @@ void FCogAIWindow_BehaviorTree::RenderNode(UBehaviorTreeComponent& BehaviorTreeC
 	            ImGui::EndTable();
 	        }
 
-	        FCogWindowWidgets::EndItemTableTooltip();
+	        FCogWidgets::EndItemTableTooltip();
         }
 
         //------------------------
         // Checkbox
         //------------------------
         ImGui::SameLine();
-        FCogWindowWidgets::PushStyleCompact();
+        FCogWidgets::PushStyleCompact();
         if (IsActive == false)
         {
             ImGui::BeginDisabled();
@@ -347,7 +347,7 @@ void FCogAIWindow_BehaviorTree::RenderNode(UBehaviorTreeComponent& BehaviorTreeC
         {
             ImGui::EndDisabled();
         }
-        FCogWindowWidgets::PopStyleCompact();
+        FCogWidgets::PopStyleCompact();
 
         //------------------------
         // Name

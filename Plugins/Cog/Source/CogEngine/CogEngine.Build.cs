@@ -15,16 +15,18 @@ public class CogEngine : ModuleRules
         PrivateDependencyModuleNames.AddRange(
 	        new []
             {
+                "ApplicationCore",
                 "CogCommon",
                 "CogImgui",
-                "CogWindow",
+                "Cog",
                 "Core",
                 "CoreUObject",
                 "Engine",
                 "InputCore",
                 "NetCore",
                 "Slate",
-                "SlateCore",
+                "SlateCore", 
+                "BuildSettings",
             });
         
         if (Target.bBuildEditor)

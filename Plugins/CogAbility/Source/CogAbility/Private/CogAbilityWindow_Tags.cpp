@@ -3,7 +3,7 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "CogAbilityHelper.h"
-#include "CogWindowWidgets.h"
+#include "CogWidgets.h"
 
 //--------------------------------------------------------------------------------------------------------------------------
 void FCogAbilityWindow_Tags::Initialize()
@@ -11,21 +11,24 @@ void FCogAbilityWindow_Tags::Initialize()
     Super::Initialize();
 
     bHasMenu = true;
-    bNoPadding = true;
-}
-
-//--------------------------------------------------------------------------------------------------------------------------
-void FCogAbilityWindow_Tags::ResetConfig()
-{
-    Super::ResetConfig();
-
-    Config->Reset();
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
 void FCogAbilityWindow_Tags::RenderHelp()
 {
     ImGui::Text("This window displays gameplay tags of the selected actor. ");
+}
+
+//--------------------------------------------------------------------------------------------------------------------------
+void FCogAbilityWindow_Tags::PreBegin(ImGuiWindowFlags& WindowFlags)
+{
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+}
+
+//--------------------------------------------------------------------------------------------------------------------------
+void FCogAbilityWindow_Tags::PostBegin()
+{
+    ImGui::PopStyleVar();
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
@@ -67,7 +70,7 @@ void FCogAbilityWindow_Tags::RenderMenu()
             ImGui::EndMenu();
         }
 
-        FCogWindowWidgets::SearchBar(Filter);
+        FCogWidgets::SearchBar("##Filter", Filter);
 
         ImGui::EndMenuBar();
     }
@@ -134,10 +137,10 @@ void FCogAbilityWindow_Tags::RenderTagContainer(const UAbilitySystemComponent& A
             //------------------------
             // Tooltip
             //------------------------
-            if (FCogWindowWidgets::BeginItemTableTooltip())
+            if (FCogWidgets::BeginItemTableTooltip())
             {
                 RenderTag(AbilitySystemComponent, Tag);
-                FCogWindowWidgets::EndItemTableTooltip();
+                FCogWidgets::EndItemTableTooltip();
             }
 
             ImGui::PopID();
@@ -153,7 +156,7 @@ void FCogAbilityWindow_Tags::RenderTag(const UAbilitySystemComponent& AbilitySys
 {
     if (ImGui::BeginTable("Tag", 2, ImGuiTableFlags_Borders))
     {
-        const ImVec4 TextColor(1.0f, 1.0f, 1.0f, 0.5f);
+        constexpr ImVec4 TextColor(1.0f, 1.0f, 1.0f, 0.5f);
 
         ImGui::TableSetupColumn("Property");
         ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);

@@ -282,7 +282,7 @@ public:
 
     UFUNCTION(BlueprintCallable, BlueprintPure=false)
     bool GetMontage(FName MontageName, UAnimMontage*& Montage, bool bPrintWarning) const;
-
+    
 protected:
     friend class ACogSamplePlayerController;
 
@@ -338,6 +338,8 @@ protected:
 
     void OnGhostTagNewOrRemoved(const FGameplayTag InTag, int32 NewCount);
 
+    void OnInvisibleTagNewOrRemoved(const FGameplayTag InTag, int32 NewCount);
+
     void OnScaleAttributeChanged(const FOnAttributeChangeData& Data);
 
     void UpdateActiveAbilitySlots();
@@ -387,5 +389,13 @@ protected:
     
     bool bIsAiming = false;
 
+    //----------------------------------------------------------------------------------------------------------------------
+    // Inspector Map Set Test
+    //----------------------------------------------------------------------------------------------------------------------
+    UPROPERTY(EditAnywhere, Category="Inspector Test")
+    TMap<FString, FVector> MapTest = { { FString("A"), FVector(1, 2, 3) }, { FString("B"), FVector(4, 5, 6) } };
+
+    UPROPERTY(EditAnywhere, Category="Inspector Test")
+    TSet<FString> SetTest = { FString("A"), FString("B") };
 };
 

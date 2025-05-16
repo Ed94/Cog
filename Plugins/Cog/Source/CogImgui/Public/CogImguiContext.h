@@ -28,7 +28,7 @@ struct COGIMGUI_API FCogImGuiViewportData
 
 struct COGIMGUI_API FCogImGuiContextScope
 {
-	UE_NODISCARD_CTOR explicit FCogImGuiContextScope(FCogImguiContext& CogImguiContext);
+	UE_NODISCARD_CTOR explicit FCogImGuiContextScope(const FCogImguiContext& CogImguiContext);
 	UE_NODISCARD_CTOR explicit FCogImGuiContextScope(ImGuiContext* GuiCtx, ImPlotContext* PlotCtx);
 	~FCogImGuiContextScope();
 
@@ -41,13 +41,15 @@ class COGIMGUI_API FCogImguiContext : public TSharedFromThis<FCogImguiContext>
 {
 public:
 
-	void Initialize();
+	void Initialize(UGameViewportClient* InGameViewport);
 
 	void Shutdown();
 
+	void SaveSettings() const;
+
 	bool GetEnableInput() const { return bEnableInput; }
 
-	void SetEnableInput(bool Value);
+	void SetEnableInput(bool InValue);
 
 	bool GetWantCaptureMouse() const { return bWantCaptureMouse; }
 
@@ -65,8 +67,6 @@ public:
 
 	bool BeginFrame(float InDeltaTime);
 
-	void GetCursorPos(ImGuiIO& IO);
-
 	void EndFrame();
 
 	float GetDpiScale() const { return DpiScale; }
@@ -77,13 +77,15 @@ public:
 
 	void SetSkipRendering(bool Value);
 
-	ImVec2 GetImguiMousePos();
+	ImVec2 GetImguiMousePos() const;
 
 	TObjectPtr<const UGameViewportClient> GetGameViewport() const { return GameViewport; }
 
 	TSharedPtr<const SCogImguiWidget> GetMainWidget() const { return MainWidget; }
 
-	static bool GetIsNetImguiInitialized() { return bIsNetImguiInitialized; }
+	void OnImGuiWidgetFocusLost();
+
+	static bool GetIsNetImguiInitialized() { return bIsNetImGuiInitialized; }
 
 private:
 
@@ -93,7 +95,7 @@ private:
 
 	bool IsConsoleOpened() const;
 
-	void DrawDebug();
+	void DrawDebug() const;
 
 	void BuildFont();
 
@@ -127,7 +129,12 @@ private:
 
 	static void ImGui_RenderWindow(ImGuiViewport* Viewport, void* Data);
 
-	UPROPERTY()
+	static const char* ImGui_GetClipboardTextFn(ImGuiContext* InImGuiContext);
+
+	static void ImGui_SetClipboardTextFn(ImGuiContext* InImGuiContext, const char* Arg);
+
+	static bool ImGui_OpenInShell(ImGuiContext* Context, const char* Path);
+
 	UTexture2D* FontAtlasTexture = nullptr;
 
 	TMap<TWeakPtr<SWindow>, ImGuiID> WindowToViewportMap;
@@ -144,12 +151,14 @@ private:
 
 	TObjectPtr<UGameViewportClient> GameViewport = nullptr;
 
-	ImGuiContext* ImGuiContext = nullptr;
+	ImGuiContext* Context = nullptr;
 
 	ImPlotContext* PlotContext = nullptr;
 
 	char IniFilename[512] = {};
 
+	TArray<char> ClipboardBuffer;
+	
 	bool bEnableInput = false;
 
 	bool bShareMouse = false;
@@ -174,6 +183,8 @@ private:
 
 	bool bSkipRendering = false;
 
-	static bool bIsNetImguiInitialized;
+	bool bRetakeFocus = false;
+
+	static bool bIsNetImGuiInitialized;
 
 };

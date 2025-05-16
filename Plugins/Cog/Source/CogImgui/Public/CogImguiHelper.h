@@ -36,6 +36,10 @@ public:
 
     static ImVec2 ToImVec2(const FVector2D& Value);
 
+    static ImVec2 ToImVec2(const FIntVector2& Value);
+
+    static ImVec2 ToImVec2(const FVector2f& Value);
+
     static ImColor ToImColor(const FColor& Value);
 
     static ImColor ToImColor(const FLinearColor& Value);
@@ -45,6 +49,8 @@ public:
     static ImVec4 ToImVec4(const FLinearColor& Value);
 
     static ImVec4 ToImVec4(const FVector4f& Value);
+
+    static ImU32 ToImU32(const FLinearColor& Value);
 
     static ImU32 ToImU32(const FColor& Value);
 
@@ -73,4 +79,6 @@ public:
     static bool DragFVector2D(const char* Label, FVector2D& Vector, float Speed = 1.0f, double Min = 0.0f, double Max = 0.0f, const char* Format = "%.3f", ImGuiSliderFlags Flags = 0);
 
     static bool ColorEdit4(const char* Label, FColor& Color, ImGuiColorEditFlags Flags = 0);
+
+    static bool ColorEdit4(const char* Label, FLinearColor& Color, ImGuiColorEditFlags Flags = 0);
 };

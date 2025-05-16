@@ -64,13 +64,13 @@ public:
 
     static void DrawPrimitiveComponent(const UPrimitiveComponent& PrimitiveComponent, const int32 BodyIndex, const FColor& Color, const bool Persistent, const float LifeTime, const uint8 DepthPriority, const float Thickness, const bool DrawName = true, const bool DrawNameShadow = true, const float DrawNameSize = 1.0f);
 
-    static void DrawOverlap(const UWorld* World, const FCollisionShape& Shape, const FVector& Location, const FQuat& Rotation, TArray<FOverlapResult>& OverlapResults, const FCogDebugDrawOverlapParams& Settings);
+    static void DrawOverlap(const UWorld* World, const FCollisionShape& Shape, const FVector& Location, const FQuat& Rotation, const bool HasHits, const TArray<FOverlapResult>& OverlapResults, const FCogDebugDrawOverlapParams& Settings);
 
     static void DrawHitResult(const UWorld* World, const FHitResult& HitResult, const FCogDebugDrawLineTraceParams& Settings);
 
     static void DrawHitResults(const UWorld* World, const TArray<FHitResult>& HitResults, const FCogDebugDrawLineTraceParams& Settings);
 
-    static void DrawLineTrace(const UWorld* World, const FVector& Start, const FVector& End, const bool HasHits, TArray<FHitResult>& HitResults, const FCogDebugDrawLineTraceParams& Settings);
+    static void DrawLineTrace(const UWorld* World, const FVector& Start, const FVector& End, const bool HasHits, const TArray<FHitResult>& HitResults, const FCogDebugDrawLineTraceParams& Settings);
 
     static void DrawSweep(const UWorld* World, const FCollisionShape& Shape, const FVector& Start, const FVector& End, const FQuat& Rotation, const bool HasHits, TArray<FHitResult>& HitResults, const FCogDebugDrawSweepParams& Settings);
 };

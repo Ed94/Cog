@@ -56,10 +56,10 @@ FColor FCogImguiHelper::ToFColor(ImU32 Color)
 {
     return FColor
     {
-        (uint8)((Color >> IM_COL32_R_SHIFT) & 0xFF),
-        (uint8)((Color >> IM_COL32_G_SHIFT) & 0xFF),
-        (uint8)((Color >> IM_COL32_B_SHIFT) & 0xFF),
-        (uint8)((Color >> IM_COL32_A_SHIFT) & 0xFF)
+        static_cast<uint8>((Color >> IM_COL32_R_SHIFT) & 0xFF),
+        static_cast<uint8>((Color >> IM_COL32_G_SHIFT) & 0xFF),
+        static_cast<uint8>((Color >> IM_COL32_B_SHIFT) & 0xFF),
+        static_cast<uint8>((Color >> IM_COL32_A_SHIFT) & 0xFF)
     };
 }
 
@@ -83,6 +83,17 @@ FVector2D FCogImguiHelper::ToFVector2D(const ImVec2& Value)
 
 //--------------------------------------------------------------------------------------------------------------------------
 ImVec2 FCogImguiHelper::ToImVec2(const FVector2D& Value)
+{
+    return ImVec2(Value.X, Value.Y);
+}
+
+//--------------------------------------------------------------------------------------------------------------------------
+ImVec2 FCogImguiHelper::ToImVec2(const FIntVector2& Value)
+{
+    return ImVec2(Value.X, Value.Y);
+}
+//--------------------------------------------------------------------------------------------------------------------------
+ImVec2 FCogImguiHelper::ToImVec2(const FVector2f& Value)
 {
     return ImVec2(Value.X, Value.Y);
 }
@@ -118,11 +129,16 @@ ImVec4 FCogImguiHelper::ToImVec4(const FVector4f& Value)
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
-ImU32 FCogImguiHelper::ToImU32(const FColor& Value)
+ImU32 FCogImguiHelper::ToImU32(const FLinearColor& Value)
 {
-    return (ImU32)ToImColor(Value);
+    return ToImColor(Value);
 }
 
+//--------------------------------------------------------------------------------------------------------------------------
+ImU32 FCogImguiHelper::ToImU32(const FColor& Value)
+{
+    return ToImColor(Value);
+}
 //--------------------------------------------------------------------------------------------------------------------------
 ImU32 FCogImguiHelper::ToImU32(const FVector4f& Value)
 {
@@ -243,8 +259,14 @@ bool FCogImguiHelper::DragFVector2D(const char* Label, FVector2D& Vector, float 
 //--------------------------------------------------------------------------------------------------------------------------
 bool FCogImguiHelper::ColorEdit4(const char* Label, FColor& Color, ImGuiColorEditFlags Flags)
 {
-    FLinearColor Linear(Color);
-    const bool Result = ImGui::ColorEdit4(Label, &Linear.R, Flags);
-    Color = Linear.ToFColor(true);
+    ImColor c = ToImColor(Color);
+    const bool Result = ImGui::ColorEdit4(Label, &c.Value.x, Flags);
+    Color = ToFColor(c);
     return Result;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------
+bool FCogImguiHelper::ColorEdit4(const char* Label, FLinearColor& Color, ImGuiColorEditFlags Flags)
+{
+    return ImGui::ColorEdit4(Label, &Color.R, Flags);
 }

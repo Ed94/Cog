@@ -25,8 +25,6 @@ public:
 
 protected:
 
-    virtual void ResetConfig() override;
-
     virtual void RenderHelp() override;
 
     virtual void RenderContent() override;
@@ -37,11 +35,12 @@ protected:
         FColor Color;
     };
 
-    FChannel Channels[ECC_MAX];
-
     TObjectPtr<UCogEngineConfig_CollisionTester> Config = nullptr;
 
+    FChannel Channels[ECC_MAX] = {};
+
     FCogDebug_Gizmo StartGizmo;
+    
     FCogDebug_Gizmo EndGizmo;
 };
 
@@ -69,7 +68,7 @@ public:
     ECogEngine_CollisionQueryType Type;
 
     UPROPERTY(Config)
-    ECogEngine_CollisionQueryMode Mode;
+    ECogEngine_CollisionQueryTraceMode Mode;
 
     UPROPERTY(Config)
     ECogEngine_CollisionQueryBy By;
@@ -92,18 +91,13 @@ public:
     UPROPERTY(Config)
     FVector ShapeExtent;
 
-    UCogEngineConfig_CollisionTester()
-    {
-        Reset();
-    }
-
     virtual void Reset() override
     {
         Super::Reset();
 
         Type = ECogEngine_CollisionQueryType::LineTrace;
         By = ECogEngine_CollisionQueryBy::Channel;
-        Mode = ECogEngine_CollisionQueryMode::Multi;
+        Mode = ECogEngine_CollisionQueryTraceMode::Multi;
         Channel = ECC_WorldStatic;
         TraceComplex = false;
         Shape = ECogEngine_CollisionQueryShape::Sphere;

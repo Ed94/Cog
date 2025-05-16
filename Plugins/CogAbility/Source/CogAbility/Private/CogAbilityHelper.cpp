@@ -1,6 +1,7 @@
 #include "CogAbilityHelper.h"
 
-#include "CogWindowWidgets.h"
+#include "CogAbilityDataAsset.h"
+#include "CogWidgets.h"
 #include "GameplayTagContainer.h"
 #include "imgui.h"
 
@@ -19,7 +20,7 @@ void FCogAbilityHelper::RenderTagContainer(const FGameplayTagContainer& Containe
     Container.GetGameplayTagArray(GameplayTags);
     for (const FGameplayTag& Tag : GameplayTags)
     {
-        FCogWindowWidgets::SmallButton(StringCast<ANSICHAR>(*Tag.ToString()).Get(), Color);
+        FCogWidgets::SmallButton(StringCast<ANSICHAR>(*Tag.ToString()).Get(), Color);
         if (Inline)
         {
             ImGui::SameLine();
@@ -50,10 +51,23 @@ void FCogAbilityHelper::RenderTagContainer(
         }
 
         const ImVec4 Color = hasTag ? MatchColor : NormalColor;
-        FCogWindowWidgets::SmallButton(StringCast<ANSICHAR>(*Tag.ToString()).Get(), Color);
+        FCogWidgets::SmallButton(StringCast<ANSICHAR>(*Tag.ToString()).Get(), Color);
         if (Inline)
         {
             ImGui::SameLine();
         }
+    }
+}
+
+//--------------------------------------------------------------------------------------------------------------------------
+void FCogAbilityHelper::RenderConfigureMessage(const TWeakObjectPtr<const UCogAbilityDataAsset> InAsset)
+{
+    if (InAsset == nullptr)
+    {
+        ImGui::Text("Create a DataAsset child of '%s' to configure. ", StringCast<ANSICHAR>(*UCogAbilityDataAsset::StaticClass()->GetName()).Get());
+    }
+    else
+    {
+        ImGui::Text("Can be configured in the '%s' DataAsset. ", StringCast<ANSICHAR>(*GetNameSafe(InAsset.Get())).Get());
     }
 }

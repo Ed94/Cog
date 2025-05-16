@@ -80,4 +80,5 @@ Plugins/*/Intermediate/*
 DerivedDataCache/*
 .vsconfig
 enc_temp_folder/*
+*.user
 Release

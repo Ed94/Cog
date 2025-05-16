@@ -27,21 +27,17 @@ public:
 
 protected:
 
-    virtual void ResetConfig() override;
-
     virtual void RenderHelp() override;
 
     virtual void RenderContent() override;
 
-    virtual void RenderTick(float DeltaTime);
+    virtual void RenderTick(float DeltaTime) override;
 
-    void ConnectTo();
+    void ConnectTo() const;
 
-    void ConnectFrom();
+    void ConnectFrom() const;
 
-    void Disconnect();
-
-    void TryStartup();
+    void Disconnect() const;
 
     void RunServer();
 

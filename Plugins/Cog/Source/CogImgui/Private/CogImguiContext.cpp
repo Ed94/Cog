@@ -13,7 +13,7 @@
 #include "Framework/Application/SlateApplication.h"
 #include "Framework/Application/SlateUser.h"
 #include "GameFramework/PlayerController.h"
-#include "GameFramework/PlayerInput.h"
+#include "HAL/PlatformApplicationMisc.h"
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "implot.h"
@@ -23,20 +23,18 @@
 #include "Widgets/SViewport.h"
 #include "Widgets/SWindow.h"
 
-static UPlayerInput* GetPlayerInput(const UWorld* World);
-
-FCogImGuiContextScope::
-FCogImGuiContextScope(FCogImguiContext& CogImguiContext)
+//--------------------------------------------------------------------------------------------------------------------------
+FCogImGuiContextScope::FCogImGuiContextScope(const FCogImguiContext& CogImguiContext)
 {
     PrevContext = ImGui::GetCurrentContext();
     PrevPlotContext = ImPlot::GetCurrentContext();
 
-    ImGui::SetCurrentContext(CogImguiContext.ImGuiContext);
+    ImGui::SetCurrentContext(CogImguiContext.Context);
     ImPlot::SetCurrentContext(CogImguiContext.PlotContext);
 }
 
-FCogImGuiContextScope::
-FCogImGuiContextScope(ImGuiContext* GuiCtx, ImPlotContext* PlotCtx)
+//--------------------------------------------------------------------------------------------------------------------------
+FCogImGuiContextScope::FCogImGuiContextScope(ImGuiContext* GuiCtx, ImPlotContext* PlotCtx)
 {
     PrevContext = ImGui::GetCurrentContext();
     PrevPlotContext = ImPlot::GetCurrentContext();
@@ -45,22 +43,29 @@ FCogImGuiContextScope(ImGuiContext* GuiCtx, ImPlotContext* PlotCtx)
     ImPlot::SetCurrentContext(PlotCtx);
 }
 
-FCogImGuiContextScope::
-~FCogImGuiContextScope()
+//--------------------------------------------------------------------------------------------------------------------------
+FCogImGuiContextScope::~FCogImGuiContextScope()
 {
     ImGui::SetCurrentContext(PrevContext);
     ImPlot::SetCurrentContext(PrevPlotContext);
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
-bool FCogImguiContext::bIsNetImguiInitialized = false;
+bool FCogImguiContext::bIsNetImGuiInitialized = false;
 
 //--------------------------------------------------------------------------------------------------------------------------
-void FCogImguiContext::Initialize()
+void FCogImguiContext::Initialize(UGameViewportClient* InGameViewport)
 {
     IMGUI_CHECKVERSION();
 
-    GameViewport = GEngine->GameViewport;
+    GameViewport = InGameViewport;
+
+    // ImGui Context must be created before creating widgets as widgets can receive events that uses the ImGui context right away.
+    Context = ImGui::CreateContext();
+    PlotContext = ImPlot::CreateContext();
+    ImGui::SetCurrentContext(Context);
+    ImPlot::SetImGuiContext(Context);
+    ImPlot::SetCurrentContext(PlotContext);
 
     if (GameViewport != nullptr)
     {
@@ -70,12 +75,6 @@ void FCogImguiContext::Initialize()
         SAssignNew(InputCatcherWidget, SCogImguiInputCatcherWidget).Context(this);
         GameViewport->AddViewportWidgetContent(InputCatcherWidget.ToSharedRef(), -TNumericLimits<int32>::Max());
     }
-
-    ImGuiContext = ImGui::CreateContext();
-    PlotContext = ImPlot::CreateContext();
-    ImGui::SetCurrentContext(ImGuiContext);
-    ImPlot::SetImGuiContext(ImGuiContext);
-    ImPlot::SetCurrentContext(PlotContext);
 
     ImGuiIO& IO = ImGui::GetIO();
     IO.UserData = this;
@@ -121,6 +120,11 @@ void FCogImguiContext::Initialize()
     PlatformIO.Platform_SetWindowTitle = ImGui_SetWindowTitle;
     PlatformIO.Platform_SetWindowAlpha = ImGui_SetWindowAlpha;
     PlatformIO.Platform_RenderWindow = ImGui_RenderWindow;
+    
+    PlatformIO.Platform_ClipboardUserData = &ClipboardBuffer;
+    PlatformIO.Platform_GetClipboardTextFn = ImGui_GetClipboardTextFn;
+    PlatformIO.Platform_SetClipboardTextFn = ImGui_SetClipboardTextFn;
+    PlatformIO.Platform_OpenInShellFn = ImGui_OpenInShell;
 
     if (FSlateApplication::IsInitialized())
     {
@@ -143,10 +147,10 @@ void FCogImguiContext::Initialize()
     }
 
 #if NETIMGUI_ENABLED
-    if (bIsNetImguiInitialized == false)
+    if (bIsNetImGuiInitialized == false)
     {
         NetImgui::Startup();
-        bIsNetImguiInitialized = true;
+        bIsNetImGuiInitialized = true;
     }
 #endif
 }
@@ -154,16 +158,16 @@ void FCogImguiContext::Initialize()
 //--------------------------------------------------------------------------------------------------------------------------
 void FCogImguiContext::Shutdown()
 {
-    FCogImGuiContextScope ImGuiContextScope(ImGuiContext, PlotContext);
+    FCogImGuiContextScope ImGuiContextScope(Context, PlotContext);
 
     //------------------------------------------------------------------
     // NetImgui must be shutdown before imgui as it uses context hooks
     //------------------------------------------------------------------
 #if NETIMGUI_ENABLED
-    if (bIsNetImguiInitialized)
+    if (bIsNetImGuiInitialized)
     {
         NetImgui::Shutdown();
-        bIsNetImguiInitialized = false;
+        bIsNetImGuiInitialized = false;
     }
 #endif
 
@@ -196,17 +200,46 @@ void FCogImguiContext::Shutdown()
         PlotContext = nullptr;
     }
 
-    if (ImGuiContext)
+    if (Context)
     {
-        ImGui::DestroyContext(ImGuiContext);
-        ImGuiContext = nullptr;
+        Context->IO.IniFilename = nullptr;
+        ImGui::DestroyContext(Context);
+        Context = nullptr;
     }
+}
+
+//--------------------------------------------------------------------------------------------------------------------------
+void FCogImguiContext::SaveSettings() const
+{
+    if (Context && Context->SettingsLoaded && Context->IO.IniFilename != nullptr)
+    {
+        ImGui::SaveIniSettingsToDisk(Context->IO.IniFilename);
+    }
+}
+
+//--------------------------------------------------------------------------------------------------------------------------
+void FCogImguiContext::OnImGuiWidgetFocusLost()
+{
+    if (bEnableInput == false)
+    { return; }
+    
+    if (GameViewport == nullptr)
+    { return; }
+
+    const SViewport* ViewportWidget = GameViewport->GetGameViewportWidget().Get();
+    if (ViewportWidget == nullptr)
+    { return; }
+    
+    if (!ViewportWidget->HasUserFocus(0))
+    { return; }
+
+    bRetakeFocus = true;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
 void FCogImguiContext::OnDisplayMetricsChanged(const FDisplayMetrics& DisplayMetrics) const
 {
-    FCogImGuiContextScope ImGuiContextScope(ImGuiContext, PlotContext);
+    FCogImGuiContextScope ImGuiContextScope(Context, PlotContext);
 
     ImGuiPlatformIO& PlatformIO = ImGui::GetPlatformIO();
     PlatformIO.Monitors.resize(0);
@@ -234,17 +267,27 @@ void FCogImguiContext::OnDisplayMetricsChanged(const FDisplayMetrics& DisplayMet
 //--------------------------------------------------------------------------------------------------------------------------
 bool FCogImguiContext::BeginFrame(float InDeltaTime)
 {
-    FCogImGuiContextScope ImGuiContextScope(ImGuiContext, PlotContext);
-
+    FCogImGuiContextScope ImGuiContextScope(Context, PlotContext);
+    
     //-------------------------------------------------------------------------------------------------------
     // Skip the first frame, to let the main widget update its TickSpaceGeometry which is returned by the 
-    // plateform callback ImGui_GetWindowPos. When using viewports Imgui needs to know the main viewport 
+    // platform callback ImGui_GetWindowPos. When using viewports Imgui needs to know the main viewport 
     // absolute position to correctly place the initial imgui windows. 
     //-------------------------------------------------------------------------------------------------------
     if (bIsFirstFrame)
     {
         bIsFirstFrame = false;
         return false;
+    }
+
+    //-------------------------------------------------------------------------------------------------------
+    // Sometime the game can retake unaware that ImGui want to keep the focus and mouse unlock.
+    // This typically happens when switching level.  
+    //-------------------------------------------------------------------------------------------------------
+    if (bRetakeFocus && IsConsoleOpened() == false)
+    {
+        SetEnableInput(true);
+        bRetakeFocus = false;
     }
 
     ImGuiIO& IO = ImGui::GetIO();
@@ -298,11 +341,14 @@ bool FCogImguiContext::BeginFrame(float InDeltaTime)
         //-------------------------------------------------------------------------------------------------------
         // Refresh modifiers otherwise, when pressing ALT-TAB, the Alt modifier is always true
         //-------------------------------------------------------------------------------------------------------
-        FModifierKeysState ModifierKeys = FSlateApplication::Get().GetModifierKeys();
-        if (ModifierKeys.IsControlDown() != IO.KeyCtrl) { IO.AddKeyEvent(ImGuiMod_Ctrl, ModifierKeys.IsControlDown()); }
-        if (ModifierKeys.IsShiftDown() != IO.KeyShift) { IO.AddKeyEvent(ImGuiMod_Shift, ModifierKeys.IsShiftDown()); }
-        if (ModifierKeys.IsAltDown() != IO.KeyAlt) { IO.AddKeyEvent(ImGuiMod_Alt, ModifierKeys.IsAltDown()); }
-        if (ModifierKeys.IsCommandDown() != IO.KeySuper) { IO.AddKeyEvent(ImGuiMod_Super, ModifierKeys.IsCommandDown()); }
+        if (bEnableInput)
+        {
+            FModifierKeysState ModifierKeys = FSlateApplication::Get().GetModifierKeys();
+            if (ModifierKeys.IsControlDown() != IO.KeyCtrl) { IO.AddKeyEvent(ImGuiMod_Ctrl, ModifierKeys.IsControlDown()); }
+            if (ModifierKeys.IsShiftDown() != IO.KeyShift) { IO.AddKeyEvent(ImGuiMod_Shift, ModifierKeys.IsShiftDown()); }
+            if (ModifierKeys.IsAltDown() != IO.KeyAlt) { IO.AddKeyEvent(ImGuiMod_Alt, ModifierKeys.IsAltDown()); }
+            if (ModifierKeys.IsCommandDown() != IO.KeySuper) { IO.AddKeyEvent(ImGuiMod_Super, ModifierKeys.IsCommandDown()); }
+        }
     }
 
     //-------------------------------------------------------------------------------------------------------
@@ -358,7 +404,7 @@ bool FCogImguiContext::BeginFrame(float InDeltaTime)
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
-ImVec2 FCogImguiContext::GetImguiMousePos()
+ImVec2 FCogImguiContext::GetImguiMousePos() const
 {
     const FVector2D& MousePosition = FSlateApplication::Get().GetCursorPos();
     if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
@@ -373,7 +419,7 @@ ImVec2 FCogImguiContext::GetImguiMousePos()
 //--------------------------------------------------------------------------------------------------------------------------
 void FCogImguiContext::EndFrame()
 {
-    FCogImGuiContextScope ImGuiContextScope(ImGuiContext, PlotContext);
+    FCogImGuiContextScope ImGuiContextScope(Context, PlotContext);
 
     ImGui::Render();
     //NetImgui::EndFrame();
@@ -644,53 +690,60 @@ void FCogImguiContext::ImGui_RenderWindow(ImGuiViewport* Viewport, void* Data)
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
-static APlayerController* GetLocalPlayerController(const UWorld* World)
+const char* FCogImguiContext::ImGui_GetClipboardTextFn(ImGuiContext* InImGuiContext)
 {
-    if (World == nullptr)
+    TArray<char>* ClipboardBuffer = static_cast<TArray<char>*>(InImGuiContext->PlatformIO.Platform_ClipboardUserData);
+    if (ClipboardBuffer)
     {
-        return nullptr;
-    }
+        FString ClipboardText;
+        FPlatformApplicationMisc::ClipboardPaste(ClipboardText);
 
-    APlayerController* PlayerController = nullptr;
-    for (FConstPlayerControllerIterator Iterator = World->GetPlayerControllerIterator(); Iterator; ++Iterator)
-    {
-        APlayerController* ItPlayerController = Iterator->Get();
-        if (ItPlayerController->IsLocalController())
-        {
-            return ItPlayerController;
-        }
+        ClipboardBuffer->SetNumUninitialized(FPlatformString::ConvertedLength<UTF8CHAR>(*ClipboardText));
+        FPlatformString::Convert(reinterpret_cast<UTF8CHAR*>(ClipboardBuffer->GetData()), ClipboardBuffer->Num(), *ClipboardText, ClipboardText.Len() + 1);
+
+        return ClipboardBuffer->GetData();
     }
 
     return nullptr;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
-static UPlayerInput* GetPlayerInput(const UWorld* World)
+void FCogImguiContext::ImGui_SetClipboardTextFn(ImGuiContext* InImGuiContext, const char* ClipboardText)
 {
-    if (World == nullptr)
-    {
-        return nullptr;
-    }
-
-    APlayerController* PlayerController = GetLocalPlayerController(World);
-    if (PlayerController == nullptr)
-    {
-        return nullptr;
-    }
-
-    UPlayerInput* PlayerInput = PlayerController->PlayerInput;
-    return PlayerInput;
+    FPlatformApplicationMisc::ClipboardCopy(UTF8_TO_TCHAR(ClipboardText));
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
-void FCogImguiContext::SetEnableInput(bool Value)
+ bool FCogImguiContext::ImGui_OpenInShell(ImGuiContext* Context, const char* Path)
 {
-    bEnableInput = Value; 
+    return FPlatformProcess::LaunchFileInDefaultExternalApplication(UTF8_TO_TCHAR(Path));
+}
+
+//--------------------------------------------------------------------------------------------------------------------------
+static APlayerController* GetLocalPlayerController(const UWorld* World)
+{
+    if (World == nullptr)
+    { return nullptr; }
+
+    for (FConstPlayerControllerIterator Iterator = World->GetPlayerControllerIterator(); Iterator; ++Iterator)
+    {
+        APlayerController* ItPlayerController = Iterator->Get();
+        if (ItPlayerController->IsLocalController())
+        { return ItPlayerController; }
+    }
+
+    return nullptr;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------
+void FCogImguiContext::SetEnableInput(const bool InValue)
+{
+    FCogImGuiContextScope ImGuiContextScope(Context, PlotContext);
+
+    bEnableInput = InValue; 
 
     if (FSlateApplication::IsInitialized() == false)
-    {
-        return; 
-    }
+    { return; }
 
     if (bEnableInput)
     {
@@ -715,6 +768,14 @@ void FCogImguiContext::SetEnableInput(bool Value)
         {
             LocalPlayer->GetSlateOperations().CaptureMouse(GameViewport->GetGameViewportWidget().ToSharedRef());
         }
+
+        //---------------------------------------------------------------------------------
+        // Make sure no keys stay down after disabling inputs
+        //---------------------------------------------------------------------------------
+        ImGuiIO& IO = ImGui::GetIO();
+        IO.ClearInputMouse();
+        IO.ClearEventsQueue();
+        IO.ClearInputKeys();
     }
 
     RefreshMouseCursor();
@@ -792,7 +853,7 @@ void FCogImguiContext::SetDPIScale(float Value)
 //--------------------------------------------------------------------------------------------------------------------------
 void FCogImguiContext::BuildFont()
 {
-    FCogImGuiContextScope ImGuiContextScope(ImGuiContext, PlotContext);
+    FCogImGuiContextScope ImGuiContextScope(Context, PlotContext);
 
     if (FontAtlasTexture != nullptr)
     {
@@ -842,7 +903,7 @@ bool FCogImguiContext::IsConsoleOpened() const
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
-void FCogImguiContext::DrawDebug()
+void FCogImguiContext::DrawDebug() const
 {
     if (ImGui::Begin("ImGui Integration Debug"))
     {

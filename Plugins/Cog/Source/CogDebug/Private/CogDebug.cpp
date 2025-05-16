@@ -5,91 +5,33 @@
 #include "CogDebugReplicator.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
-#include "imgui.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Misc/EngineVersionComparison.h"
 
 //--------------------------------------------------------------------------------------------------------------------------
-TWeakObjectPtr<AActor> FCogDebug::Selection[] = {};
+ TMap<int32, FCogDebugContext> FCogDebug::DebugContexts;
 FCogDebugSettings FCogDebug::Settings = FCogDebugSettings();
 
 //--------------------------------------------------------------------------------------------------------------------------
-void FCogDebug::Reset()
+FCogDebugContext& FCogDebug::Get(const int32 InPieId)
 {
-    Settings = FCogDebugSettings();
-}
-
-//--------------------------------------------------------------------------------------------------------------------------
-bool FCogDebug::IsDebugActiveForObject(const UObject* WorldContextObject)
-{
-    const UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
-    if (World == nullptr)
+    if (InPieId == INDEX_NONE)
     {
-        return true;
-    }
-
-    if (World->GetNetMode() == NM_DedicatedServer)
-    {
-        return true;
-    }
-
-    const bool Result = IsDebugActiveForObject_Internal(WorldContextObject, Selection[GetPieSessionId()].Get(), Settings.bIsFilteringBySelection);
-
-    return Result;
-}
-
-//--------------------------------------------------------------------------------------------------------------------------
-bool FCogDebug::IsReplicatedDebugActiveForObject(const UObject* WorldContextObject, const AActor* ServerSelection, bool IsServerFilteringBySelection)
-{
-    return IsDebugActiveForObject_Internal(WorldContextObject, ServerSelection, IsServerFilteringBySelection);
-}
-
-//--------------------------------------------------------------------------------------------------------------------------
-bool FCogDebug::IsDebugActiveForObject_Internal(const UObject* WorldContextObject, const AActor* InSelection, bool InIsFilteringBySelection)
-{
-    if (InIsFilteringBySelection == false)
-    {
-        return true;
-    }
-
-    if (WorldContextObject == nullptr)
-    {
-        return true;
-    }
-
-    const AActor* SelectionPtr = InSelection;
-    if (SelectionPtr == nullptr)
-    {
-        return true;
-    }
-
-    const UObject* Outer = WorldContextObject;
-    for (;;)
-    {
-        if (SelectionPtr == Outer)
+        if (FCogDebugContext* Context = DebugContexts.Find(1))
         {
-            return true;
+            return *Context;
         }
-
-        if (Cast<ICogCommonDebugFilteredActorInterface>(Outer))
-        {
-            return false;
-        }
-
-        const UObject* NewOuter = Outer->GetOuter();
-        if (NewOuter == Outer || NewOuter == nullptr)
-        {
-            return true;
-        }
-
-        Outer = NewOuter;
     }
+
+    FCogDebugContext& Context = DebugContexts.FindOrAdd(InPieId);
+    return Context;  
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
-AActor* FCogDebug::GetSelection()
+FCogDebugContext& FCogDebug::Get()
 {
-    return Selection[GetPieSessionId()].Get();
+    const int32 PieId = GetPieSessionId();
+    return Get(PieId);
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
@@ -108,31 +50,91 @@ int32 FCogDebug::GetPieSessionId()
 
 
 //--------------------------------------------------------------------------------------------------------------------------
-void FCogDebug::SetSelection(const UWorld* World, AActor* Value)
+void FCogDebug::Reset()
 {
-    Selection[GetPieSessionId()] = Value;
+    Settings = FCogDebugSettings();
+}
 
-    ReplicateSelection(World, Value);
+//--------------------------------------------------------------------------------------------------------------------------
+bool FCogDebug::IsDebugActiveForObject(const UObject* WorldContextObject)
+{
+    const UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
+    if (World == nullptr)
+    { return true; }
+
+    if (World->GetNetMode() == NM_DedicatedServer)
+    { return true; }
+
+    const bool Result = IsDebugActiveForObject_Internal(WorldContextObject, GetSelection(), Settings.bIsFilteringBySelection);
+    return Result;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------
+bool FCogDebug::IsReplicatedDebugActiveForObject(const UObject* WorldContextObject, const AActor* ServerSelection, bool IsServerFilteringBySelection)
+{
+    return IsDebugActiveForObject_Internal(WorldContextObject, ServerSelection, IsServerFilteringBySelection);
+}
+
+//--------------------------------------------------------------------------------------------------------------------------
+bool FCogDebug::IsDebugActiveForObject_Internal(const UObject* WorldContextObject, const AActor* InSelection, bool InIsFilteringBySelection)
+{
+    if (InIsFilteringBySelection == false)
+    { return true; }
+
+    if (WorldContextObject == nullptr)
+    { return true; }
+
+    const AActor* SelectionPtr = InSelection;
+    if (SelectionPtr == nullptr)
+    { return true; }
+
+    const UObject* Outer = WorldContextObject;
+    for (;;)
+    {
+        if (SelectionPtr == Outer)
+        { return true; }
+
+        if (Cast<ICogCommonDebugFilteredActorInterface>(Outer))
+        { return false; }
+
+        const UObject* NewOuter = Outer->GetOuter();
+        if (NewOuter == Outer || NewOuter == nullptr)
+        { return true; }
+
+        Outer = NewOuter;
+    }
+}
+
+//--------------------------------------------------------------------------------------------------------------------------
+AActor* FCogDebug::GetSelection()
+{
+    return Get().Selection.Get();
+}
+
+//--------------------------------------------------------------------------------------------------------------------------
+FCogDebugTracker& FCogDebug::GetTracker()
+{
+    return Get().Tracker;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------
+void FCogDebug::SetSelection(AActor* InValue)
+{
+    Get().Selection = InValue;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
 void FCogDebug::ReplicateSelection(const UWorld* World, AActor* Value)
 {
     if (World == nullptr)
-    {
-        return;
-    }
+    { return; }
 
     ACogDebugReplicator* Replicator = ACogDebugReplicator::GetLocalReplicator(*World);
     if (Replicator == nullptr)
-    {
-        return;
-    }
+    { return; }
 
     if (Replicator->HasAuthority())
-    {
-        return;
-    }
+    { return; }
 
     Replicator->Server_SetSelection(Value, Settings.ReplicateSelection);
 }
@@ -144,7 +146,7 @@ bool FCogDebug::GetIsFilteringBySelection()
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
-void FCogDebug::SetIsFilteringBySelection(UWorld* World, bool Value)
+void FCogDebug::SetIsFilteringBySelection(const UWorld* World, bool Value)
 {
     Settings.bIsFilteringBySelection = Value;
 
@@ -173,13 +175,9 @@ float FCogDebug::GetDebugDuration(bool bPersistent)
 float FCogDebug::GetDebugTextDuration(bool bPersistent)
 {
     if (bPersistent)
-    {
-        return Settings.Persistent ? 100 : Settings.Duration;
-    }
-    else
-    {
-        return 0.0f;
-    }
+    { return Settings.Persistent ? 100 : Settings.Duration; }
+
+    return 0.0f;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
@@ -191,7 +189,7 @@ int FCogDebug::GetDebugSegments()
 //--------------------------------------------------------------------------------------------------------------------------
 int FCogDebug::GetCircleSegments()
 {
-    return (Settings.Segments * 2) + 2; // because DrawDebugCircle does Segments = FMath::Max((Segments - 2) / 2, 4) for some reason
+    return (Settings.Segments * 2) + 2; // because DrawDebugCircle do: Segments = FMath::Max((Segments - 2) / 2, 4) for some reason
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
@@ -216,14 +214,12 @@ uint8 FCogDebug::GetDebugDepthPriority(float InDepthPriority)
 FColor FCogDebug::ModulateDebugColor(const UWorld* World, const FColor& Color, bool bPersistent)
 {
     if (bPersistent == false)
-    {
-        return Color;
-    }
+    { return Color; }
 
     switch (Settings.RecolorMode)
     {
         case ECogDebugRecolorMode::None:
-        {
+        { 
             return Color;
         }
 
@@ -252,7 +248,7 @@ FColor FCogDebug::ModulateDebugColor(const UWorld* World, const FColor& Color, b
         case ECogDebugRecolorMode::HueOverFrames:
         {
             const FLinearColor BaseColor(Color);
-            const float Factor = (Settings.RecolorFrameCycle > 0) ? (GFrameCounter % Settings.RecolorFrameCycle) / (float)Settings.RecolorFrameCycle : 0.0f;
+            const float Factor = (Settings.RecolorFrameCycle > 0) ? (GFrameCounter % Settings.RecolorFrameCycle) / static_cast<float>(Settings.RecolorFrameCycle) : 0.0f;
             const FLinearColor NewColor(Factor * 360.0f, 1.0f, 1.0f);
             const FLinearColor BlendColor = BaseColor * (1.0f - Settings.RecolorIntensity) + NewColor.HSVToLinearRGB() * Settings.RecolorIntensity;
             return BlendColor.ToFColor(true);
@@ -286,9 +282,7 @@ bool FCogDebug::IsSecondarySkeletonBone(FName BoneName)
     for (const FString& Wildcard : Settings.SecondaryBoneWildcards)
     {
         if (BoneString.MatchesWildcard(Wildcard))
-        {
-            return true;
-        }
+        { return true; }
     }
 
     return false;
@@ -305,12 +299,6 @@ void FCogDebug::GetDebugChannelColors(FColor ChannelColors[ECC_MAX])
     ChannelColors[ECC_PhysicsBody]            = Settings.ChannelColorPhysicsBody;
     ChannelColors[ECC_Vehicle]                = Settings.ChannelColorVehicle;
     ChannelColors[ECC_Destructible]           = Settings.ChannelColorDestructible;
-    ChannelColors[ECC_EngineTraceChannel1]    = Settings.ChannelColorEngineTraceChannel1;
-    ChannelColors[ECC_EngineTraceChannel2]    = Settings.ChannelColorEngineTraceChannel2;
-    ChannelColors[ECC_EngineTraceChannel3]    = Settings.ChannelColorEngineTraceChannel3;
-    ChannelColors[ECC_EngineTraceChannel4]    = Settings.ChannelColorEngineTraceChannel4;
-    ChannelColors[ECC_EngineTraceChannel5]    = Settings.ChannelColorEngineTraceChannel5;
-    ChannelColors[ECC_EngineTraceChannel6]    = Settings.ChannelColorEngineTraceChannel6;
     ChannelColors[ECC_GameTraceChannel1]      = Settings.ChannelColorGameTraceChannel1;
     ChannelColors[ECC_GameTraceChannel2]      = Settings.ChannelColorGameTraceChannel2;
     ChannelColors[ECC_GameTraceChannel3]      = Settings.ChannelColorGameTraceChannel3;
@@ -368,4 +356,40 @@ void FCogDebug::GetDebugDrawSweepSettings(FCogDebugDrawSweepParams& Params)
     GetDebugDrawLineTraceSettings(Params);
 
     Params.DrawHitShapes = Settings.CollisionQueryDrawHitShapes;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------
+void FCogDebug::Plot(const UObject* WorldContextObject, const FCogDebugTrackId& InTrackId, const float Value)
+{
+    Get().Tracker.Plot(WorldContextObject, InTrackId, Value);
+}
+
+//--------------------------------------------------------------------------------------------------------------------------
+FCogDebugEvent& FCogDebug::StartEvent(const UObject* WorldContextObject, const FCogDebugTrackId& InTrackId, const FCogDebugEventId& InEventId, bool IsInstant, const int32 Row, const FColor& Color)
+{
+    return Get().Tracker.StartEvent(WorldContextObject, InTrackId, InEventId, IsInstant, Row, Color);
+}
+
+//--------------------------------------------------------------------------------------------------------------------------
+FCogDebugEvent& FCogDebug::InstantEvent(const UObject* WorldContextObject, const FCogDebugTrackId& InTrackId, const FCogDebugTrackId& InEventId, const int32 Row, const FColor& Color)
+{
+    return Get().Tracker.InstantEvent(WorldContextObject, InTrackId, InEventId, Row, Color);
+}
+
+//--------------------------------------------------------------------------------------------------------------------------
+FCogDebugEvent& FCogDebug::StartEvent(const UObject* WorldContextObject, const FCogDebugTrackId& InTrackId, const FCogDebugTrackId& InEventId, const int32 Row, const FColor& Color)
+{
+    return Get().Tracker.StartEvent(WorldContextObject, InTrackId, InEventId, Row, Color);
+}
+
+//--------------------------------------------------------------------------------------------------------------------------
+FCogDebugEvent& FCogDebug::StopEvent(const UObject* WorldContextObject, const FCogDebugTrackId& InTrackId, const FCogDebugTrackId& InEventId)
+{
+    return Get().Tracker.StopEvent(WorldContextObject, InTrackId, InEventId);
+}
+
+//--------------------------------------------------------------------------------------------------------------------------
+FCogDebugEvent& FCogDebug::ToggleEvent(const UObject* WorldContextObject, const FCogDebugTrackId& InTrackId, const FCogDebugTrackId& InEventId, const bool ToggleValue, const int32 Row, const FColor& Color)
+{
+    return Get().Tracker.ToggleEvent(WorldContextObject, InTrackId, InEventId, ToggleValue, Row, Color);
 }

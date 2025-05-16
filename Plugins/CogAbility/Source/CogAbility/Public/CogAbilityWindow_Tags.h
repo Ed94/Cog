@@ -23,9 +23,11 @@ protected:
 
     virtual void GetTagContainer(FGameplayTagContainer& TagContainer) {}
 
-    virtual void ResetConfig();
-
     virtual void RenderHelp() override;
+
+    virtual void PreBegin(ImGuiWindowFlags& WindowFlags) override;
+    
+    virtual void PostBegin() override;
 
     virtual void RenderContent() override;
 
@@ -49,7 +51,7 @@ class COGABILITY_API FCogAbilityWindow_OwnedTags : public FCogAbilityWindow_Tags
 
     virtual void RenderHelp() override;
 
-    virtual void GetTagContainer(FGameplayTagContainer& TagContainer);
+    virtual void GetTagContainer(FGameplayTagContainer& TagContainer) override;
 };
 
 
@@ -62,7 +64,7 @@ class COGABILITY_API FCogAbilityWindow_BlockedTags : public FCogAbilityWindow_Ta
 
     virtual void RenderHelp() override;
 
-    virtual void GetTagContainer(FGameplayTagContainer& TagContainer);
+    virtual void GetTagContainer(FGameplayTagContainer& TagContainer) override;
 };
 
 //--------------------------------------------------------------------------------------------------------------------------

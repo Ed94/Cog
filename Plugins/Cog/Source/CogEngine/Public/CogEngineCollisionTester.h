@@ -17,11 +17,20 @@ enum class ECogEngine_CollisionQueryType : uint8
 
 //--------------------------------------------------------------------------------------------------------------------------
 UENUM()
-enum class ECogEngine_CollisionQueryMode : uint8
+enum class ECogEngine_CollisionQueryTraceMode : uint8
 {
     Single,
     Multi,
     Test,
+};
+
+//--------------------------------------------------------------------------------------------------------------------------
+UENUM()
+enum class ECogEngine_CollisionQueryOverlapMode : uint8
+{
+    AnyTest,
+    BlockingTest,
+    Multi,
 };
 
 //--------------------------------------------------------------------------------------------------------------------------
@@ -49,7 +58,6 @@ class COGENGINE_API ACogEngineCollisionTester : public AActor
     GENERATED_BODY()
 
 public:
-
     ACogEngineCollisionTester(const FObjectInitializer& ObjectInitializer);
 
     virtual void Tick(float DeltaSeconds) override;
@@ -65,7 +73,10 @@ public:
     ECogEngine_CollisionQueryType Type = ECogEngine_CollisionQueryType::LineTrace;
 
     UPROPERTY(EditAnywhere, Category="Cog")
-    ECogEngine_CollisionQueryMode Mode = ECogEngine_CollisionQueryMode::Multi;
+    ECogEngine_CollisionQueryTraceMode TraceMode = ECogEngine_CollisionQueryTraceMode::Multi;
+
+    UPROPERTY(EditAnywhere, Category="Cog")
+    ECogEngine_CollisionQueryOverlapMode OverlapMode = ECogEngine_CollisionQueryOverlapMode::Multi;
 
     UPROPERTY(EditAnywhere, Category="Cog")
     ECogEngine_CollisionQueryBy By = ECogEngine_CollisionQueryBy::Channel;
@@ -80,7 +91,7 @@ public:
     int32 ObjectTypesToQuery = 0;
 
     UPROPERTY(EditAnywhere, Category="Cog")
-    TEnumAsByte<ECollisionChannel> Channel = ECC_WorldStatic;
+    TEnumAsByte<ECollisionChannel> TraceChannel = ECC_Visibility;
 
     UPROPERTY()
     int32 ProfileIndex = 0;
@@ -125,8 +136,8 @@ public:
     FColor ImpactNormalColor = FColor::Cyan;
 
     UPROPERTY(EditAnywhere, Category="Cog")
-    USceneComponent* StartComponent = nullptr;
+    TObjectPtr<USceneComponent> StartComponent;
 
     UPROPERTY(EditAnywhere, Category="Cog")
-    USceneComponent* EndComponent = nullptr;
+    TObjectPtr<USceneComponent> EndComponent;
 };

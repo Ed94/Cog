@@ -1,7 +1,7 @@
 #include "CogEngineWindow_Skeleton.h"
 
 #include "CogDebug.h"
-#include "CogWindowWidgets.h"
+#include "CogWidgets.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "DrawDebugHelpers.h"
 #include "Engine/SkeletalMesh.h"
@@ -111,12 +111,12 @@ void FCogEngineWindow_Skeleton::RenderContent()
             ImGui::EndMenu();
         }
 
-        FCogWindowWidgets::SearchBar(Filter);
+        FCogWidgets::SearchBar("##Filter", Filter);
 
         ImGui::EndMenuBar();
     }
 
-    ImGui::PushStyleVar(ImGuiStyleVar_IndentSpacing, FCogWindowWidgets::GetFontWidth());
+    ImGui::PushStyleVar(ImGuiStyleVar_IndentSpacing, FCogWidgets::GetFontWidth());
 
     HoveredBoneIndex = INDEX_NONE;
     RenderBoneEntry(0, false);
@@ -207,7 +207,7 @@ void FCogEngineWindow_Skeleton::RenderBoneEntry(int32 BoneIndex, bool OpenAllChi
         // Checkbox
         //------------------------
         ImGui::SameLine();
-        FCogWindowWidgets::PushStyleCompact();
+        FCogWidgets::PushStyleCompact();
         if (ImGui::Checkbox("##Visible", &BoneInfo.ShowBone))
         {
             if (IsControlDown)
@@ -223,10 +223,10 @@ void FCogEngineWindow_Skeleton::RenderBoneEntry(int32 BoneIndex, bool OpenAllChi
                 BoneInfo.ShowTrajectory = false;
             }
         }
-        FCogWindowWidgets::PopStyleCompact();
+        FCogWidgets::PopStyleCompact();
 
-        const bool HasCustomVisiblity = BoneInfo.ShowName || BoneInfo.ShowAxes || BoneInfo.ShowLocalVelocity || BoneInfo.ShowTrajectory;
-        if (HasCustomVisiblity)
+        const bool HasCustomVisibility = BoneInfo.ShowName || BoneInfo.ShowAxes || BoneInfo.ShowLocalVelocity || BoneInfo.ShowTrajectory;
+        if (HasCustomVisibility)
         {
             BoneInfo.ShowBone = true;
         }
@@ -235,7 +235,7 @@ void FCogEngineWindow_Skeleton::RenderBoneEntry(int32 BoneIndex, bool OpenAllChi
         // Name
         //------------------------
         ImGui::SameLine();
-        ImVec4 NameColor = HasCustomVisiblity ? ImVec4(1.0f, 1.0f, 0.0f, 1.0f) : ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+        ImVec4 NameColor = HasCustomVisibility ? ImVec4(1.0f, 1.0f, 0.0f, 1.0f) : ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
         ImGui::TextColored(NameColor, "%s", BoneName.Get());
     }
 

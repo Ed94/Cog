@@ -33,7 +33,7 @@ public:
 
     FCogEngineSpawnFunction GetSpawnFunction() const { return SpawnFunction; }
 
-    void SetSpawnFunction(FCogEngineSpawnFunction Value) { SpawnFunction = Value; }
+    void SetSpawnFunction(const FCogEngineSpawnFunction& Value) { SpawnFunction = Value; }
 
     UFUNCTION(Server, Reliable)
     void Server_Spawn(const FCogEngineSpawnEntry& SpawnEntry);
@@ -54,7 +54,7 @@ public:
     UFUNCTION(Reliable, Server)
     void Server_ApplyCheat(const AActor* CheatInstigator, const TArray<AActor*>& TargetActors, const FCogEngineCheat& Cheat) const;
 
-	static ECogEngineCheat_ActiveState IsCheatActiveOnTargets(const TArray<AActor*>& Targets, const FCogEngineCheat& Cheat);
+	ECogEngineCheat_ActiveState IsCheatActiveOnTargets(const TArray<AActor*>& Targets, const FCogEngineCheat& Cheat) const;
 
 protected:
 
@@ -64,7 +64,7 @@ protected:
     UFUNCTION()
     void OnRep_TimeDilation() const;
 
-    TObjectPtr<APlayerController> OwnerPlayerController;
+    TWeakObjectPtr<APlayerController> OwnerPlayerController;
 
     uint32 bHasAuthority : 1;
     uint32 bIsLocal : 1;

@@ -9,17 +9,21 @@
 #include "CogAbilityWindow_Tweaks.h"
 #include "CogAIWindow_BehaviorTree.h"
 #include "CogAIWindow_Blackboard.h"
+#include "CogEngineWindow_BuildInfo.h"
 #include "CogEngineWindow_Cheats.h"
 #include "CogEngineWindow_CollisionTester.h"
 #include "CogEngineWindow_CollisionViewer.h"
 #include "CogEngineWindow_CommandBindings.h"
+#include "CogEngineWindow_Console.h"
 #include "CogEngineWindow_DebugSettings.h"
 #include "CogEngineWindow_ImGui.h"
 #include "CogEngineWindow_Inspector.h"
+#include "CogEngineWindow_Levels.h"
 #include "CogEngineWindow_LogCategories.h"
 #include "CogEngineWindow_Metrics.h"
 #include "CogEngineWindow_NetImgui.h"
 #include "CogEngineWindow_NetEmulation.h"
+#include "CogEngineWindow_Notifications.h"
 #include "CogEngineWindow_OutputLog.h"
 #include "CogEngineWindow_Plots.h"
 #include "CogEngineWindow_Scalability.h"
@@ -32,30 +36,32 @@
 #include "CogEngineWindow_Transform.h"
 #include "CogInputWindow_Actions.h"
 #include "CogInputWindow_Gamepad.h"
-#include "CogWindowManager.h"
+#include "CogSubsystem.h"
 
 #include "Engine/Engine.h"
-#include "GameFramework/Character.h"
-#include "GameFramework/GameStateBase.h"
 #include "GameFramework/GameUserSettings.h"
 
 //--------------------------------------------------------------------------------------------------------------------------
-void Cog::AddAllWindows(UCogWindowManager& CogWindowManager)
+void Cog::AddAllWindows(UCogSubsystem& CogSubsystem)
 {
     //---------------------------------------
     // Engine
     //---------------------------------------
-    CogWindowManager.AddWindow<FCogEngineWindow_CollisionTester>("Engine.Collision Tester");
+    CogSubsystem.AddWindow<FCogEngineWindow_BuildInfo>("Engine.Build Info");
 
-    CogWindowManager.AddWindow<FCogEngineWindow_CollisionViewer>("Engine.Collision Viewer");
+    CogSubsystem.AddWindow<FCogEngineWindow_CollisionTester>("Engine.Collision Tester");
 
-    CogWindowManager.AddWindow<FCogEngineWindow_CommandBindings>("Engine.Command Bindings");
+    CogSubsystem.AddWindow<FCogEngineWindow_CollisionViewer>("Engine.Collision Viewer");
 
-    CogWindowManager.AddWindow<FCogEngineWindow_DebugSettings>("Engine.Debug Settings");
+    CogSubsystem.AddWindow<FCogEngineWindow_CommandBindings>("Engine.Command Bindings");
 
-    CogWindowManager.AddWindow<FCogEngineWindow_ImGui>("Engine.ImGui");
+    CogSubsystem.AddWindow<FCogEngineWindow_Console>("Engine.Console");
 
-    FCogEngineWindow_Inspector* Inspector = CogWindowManager.AddWindow<FCogEngineWindow_Inspector>("Engine.Inspector");
+    CogSubsystem.AddWindow<FCogEngineWindow_DebugSettings>("Engine.Debug Settings");
+
+    CogSubsystem.AddWindow<FCogEngineWindow_ImGui>("Engine.ImGui");
+
+    FCogEngineWindow_Inspector* Inspector = CogSubsystem.AddWindow<FCogEngineWindow_Inspector>("Engine.Inspector");
     Inspector->AddFavorite(GEngine->GetGameUserSettings(), [](UObject* Object)
         {
             if (UGameUserSettings* UserSettings = Cast<UGameUserSettings>(Object))
@@ -64,70 +70,70 @@ void Cog::AddAllWindows(UCogWindowManager& CogWindowManager)
             }
         });
 
-    CogWindowManager.AddWindow<FCogEngineWindow_LogCategories>("Engine.Log Categories");
+    CogSubsystem.AddWindow<FCogEngineWindow_Levels>("Engine.Levels");
 
-    CogWindowManager.AddWindow<FCogEngineWindow_Metrics>("Engine.Metrics");
+    CogSubsystem.AddWindow<FCogEngineWindow_LogCategories>("Engine.Log Categories");
 
-    CogWindowManager.AddWindow<FCogEngineWindow_NetEmulation>("Engine.Net Emulation");
+    CogSubsystem.AddWindow<FCogEngineWindow_Metrics>("Engine.Metrics");
 
-    CogWindowManager.AddWindow<FCogEngineWindow_NetImgui>("Engine.Net ImGui");
+    CogSubsystem.AddWindow<FCogEngineWindow_NetEmulation>("Engine.Net Emulation");
 
-    CogWindowManager.AddWindow<FCogEngineWindow_OutputLog>("Engine.Output Log");
+    CogSubsystem.AddWindow<FCogEngineWindow_NetImgui>("Engine.Net ImGui");
 
-    CogWindowManager.AddWindow<FCogEngineWindow_Plots>("Engine.Plots");
+    CogSubsystem.AddWindow<FCogEngineWindow_Notifications>("Engine.Notifications");
 
-    FCogEngineWindow_Selection* SelectionWindow = CogWindowManager.AddWindow<FCogEngineWindow_Selection>("Engine.Selection");
-    SelectionWindow->SetActorClasses({ ACharacter::StaticClass(), AActor::StaticClass(), AGameModeBase::StaticClass(), AGameStateBase::StaticClass() });
-    SelectionWindow->SetTraceType(UEngineTypes::ConvertToTraceType(ECC_Pawn));
+    CogSubsystem.AddWindow<FCogEngineWindow_OutputLog>("Engine.Output Log");
 
-    CogWindowManager.AddWindow<FCogEngineWindow_Scalability>("Engine.Scalability");
+    CogSubsystem.AddWindow<FCogEngineWindow_Plots>("Engine.Plots");
 
-    CogWindowManager.AddWindow<FCogEngineWindow_Skeleton>("Engine.Skeleton");
+    CogSubsystem.AddWindow<FCogEngineWindow_Selection>("Engine.Selection");
 
-    CogWindowManager.AddWindow<FCogEngineWindow_Slate>("Engine.Slate");
+    CogSubsystem.AddWindow<FCogEngineWindow_Scalability>("Engine.Scalability");
 
-    CogWindowManager.AddWindow<FCogEngineWindow_Spawns>("Engine.Spawns");
+    CogSubsystem.AddWindow<FCogEngineWindow_Skeleton>("Engine.Skeleton");
 
-    FCogEngineWindow_Stats* StatsWindow = CogWindowManager.AddWindow<FCogEngineWindow_Stats>("Engine.Stats");
+    CogSubsystem.AddWindow<FCogEngineWindow_Slate>("Engine.Slate");
 
-    CogWindowManager.AddWindow<FCogEngineWindow_TimeScale>("Engine.Time Scale");
+    CogSubsystem.AddWindow<FCogEngineWindow_Spawns>("Engine.Spawns");
 
-    CogWindowManager.AddWindow<FCogEngineWindow_Transform>("Engine.Transform");
+    CogSubsystem.AddWindow<FCogEngineWindow_Stats>("Engine.Stats");
 
+    CogSubsystem.AddWindow<FCogEngineWindow_TimeScale>("Engine.Time Scale");
+
+    CogSubsystem.AddWindow<FCogEngineWindow_Transform>("Engine.Transform");
+    
     //---------------------------------------
     // Abilities
     //---------------------------------------
-    CogWindowManager.AddWindow<FCogAbilityWindow_Abilities>("Gameplay.Abilities");
+    CogSubsystem.AddWindow<FCogAbilityWindow_Abilities>("Gameplay.Abilities");
 
-    CogWindowManager.AddWindow<FCogAbilityWindow_Attributes>("Gameplay.Attributes");
+    CogSubsystem.AddWindow<FCogAbilityWindow_Attributes>("Gameplay.Attributes");
 
-    CogWindowManager.AddWindow<FCogAbilityWindow_BlockedTags>("Gameplay.Blocking Tags");
+    CogSubsystem.AddWindow<FCogAbilityWindow_BlockedTags>("Gameplay.Blocking Tags");
 
-    //CogWindowManager.AddWindow<FCogEngineWindow_Cheats>("Gameplay.Cheats");
+    CogSubsystem.AddWindow<FCogEngineWindow_Cheats>("Gameplay.Cheats");
 
-    CogWindowManager.AddWindow<FCogEngineWindow_Cheats>("Gameplay.Cheats");
+    CogSubsystem.AddWindow<FCogAbilityWindow_Effects>("Gameplay.Effects");
 
-    CogWindowManager.AddWindow<FCogAbilityWindow_Effects>("Gameplay.Effects");
+    CogSubsystem.AddWindow<FCogAbilityWindow_Pools>("Gameplay.Pools");
 
-    CogWindowManager.AddWindow<FCogAbilityWindow_Pools>("Gameplay.Pools");
+    CogSubsystem.AddWindow<FCogAbilityWindow_OwnedTags>("Gameplay.Owned Tags");
 
-    CogWindowManager.AddWindow<FCogAbilityWindow_OwnedTags>("Gameplay.Owned Tags");
+    CogSubsystem.AddWindow<FCogAbilityWindow_Tasks>("Gameplay.Tasks");
 
-    CogWindowManager.AddWindow<FCogAbilityWindow_Tasks>("Gameplay.Tasks");
-
-    CogWindowManager.AddWindow<FCogAbilityWindow_Tweaks>("Gameplay.Tweaks");
+    CogSubsystem.AddWindow<FCogAbilityWindow_Tweaks>("Gameplay.Tweaks");
 
     //---------------------------------------
     // AI
     //---------------------------------------
-    CogWindowManager.AddWindow<FCogAIWindow_BehaviorTree>("AI.Behavior Tree");
+    CogSubsystem.AddWindow<FCogAIWindow_BehaviorTree>("AI.Behavior Tree");
 
-    CogWindowManager.AddWindow<FCogAIWindow_Blackboard>("AI.Blackboard");
+    CogSubsystem.AddWindow<FCogAIWindow_Blackboard>("AI.Blackboard");
 
     //---------------------------------------
     // Input
     //---------------------------------------
-    CogWindowManager.AddWindow<FCogInputWindow_Actions>("Input.Actions");
+    CogSubsystem.AddWindow<FCogInputWindow_Actions>("Input.Actions");
 
-    CogWindowManager.AddWindow<FCogInputWindow_Gamepad>("Input.Gamepad");
+    CogSubsystem.AddWindow<FCogInputWindow_Gamepad>("Input.Gamepad");
 }

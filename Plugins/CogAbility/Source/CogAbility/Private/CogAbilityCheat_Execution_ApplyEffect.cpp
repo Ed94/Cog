@@ -9,7 +9,7 @@
 #include "CogWindow.h"
 
 //--------------------------------------------------------------------------------------------------------------------------
-void UCogAbilityCheat_Execution_ApplyEffect::Execute_Implementation(const AActor* Instigator, const TArray<AActor*>& Targets) const
+void UCogAbilityCheat_Execution_ApplyEffect::Execute_Implementation(const UObject* WorldContextObject, const AActor* Instigator, const TArray<AActor*>& Targets) const
 {
     UAbilitySystemComponent* DefaultInstigatorAbilitySystem = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Instigator, true);
 
@@ -56,7 +56,7 @@ void UCogAbilityCheat_Execution_ApplyEffect::Execute_Implementation(const AActor
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
-ECogEngineCheat_ActiveState UCogAbilityCheat_Execution_ApplyEffect::IsActiveOnTargets_Implementation(const TArray<AActor*>& Targets) const
+ECogEngineCheat_ActiveState UCogAbilityCheat_Execution_ApplyEffect::IsActiveOnTargets_Implementation(const UObject* WorldContextObject, const TArray<AActor*>& Targets) const
 {
     if (Effect == nullptr)
     {
@@ -106,6 +106,5 @@ bool UCogAbilityCheat_Execution_ApplyEffect::GetColor(const FCogWindow& InCallin
 	const UCogAbilityConfig_Alignment* Config = InCallingWindow.GetConfig<UCogAbilityConfig_Alignment>();
     const UCogAbilityDataAsset* Asset = InCallingWindow.GetAsset<UCogAbilityDataAsset>();
 
-    OutColor = Config->GetEffectColor(Asset, *GameplayEffect);
-	return true;
+    return Config->GetEffectColor(Asset, *GameplayEffect, OutColor);
 }

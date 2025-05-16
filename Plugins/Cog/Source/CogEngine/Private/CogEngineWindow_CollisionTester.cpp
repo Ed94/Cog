@@ -2,7 +2,7 @@
 
 #include "CogDebug.h"
 #include "CogImguiHelper.h"
-#include "CogWindowWidgets.h"
+#include "CogWidgets.h"
 #include "Components/PrimitiveComponent.h"
 #include "Components/SceneComponent.h"
 #include "Engine/CollisionProfile.h"
@@ -23,14 +23,6 @@ void FCogEngineWindow_CollisionTester::Initialize()
 void FCogEngineWindow_CollisionTester::RenderHelp()
 {
     ImGui::Text("This window is used to test a collision query.");
-}
-
-//--------------------------------------------------------------------------------------------------------------------------
-void FCogEngineWindow_CollisionTester::ResetConfig()
-{
-    Super::ResetConfig();
-
-    Config->Reset();
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
@@ -55,7 +47,7 @@ void FCogEngineWindow_CollisionTester::RenderContent()
             NewActor->SetActorLabel(NewActor->GetName().Replace(TEXT("CogEngine"), TEXT("")));
 #endif
 
-            FCogDebug::SetSelection(GetWorld(), NewActor);
+            FCogDebug::SetSelection(NewActor);
         }
         if (ImGui::BeginItemTooltip())
         {
@@ -85,9 +77,9 @@ void FCogEngineWindow_CollisionTester::RenderContent()
 
         ImGui::SetNextItemWidth(-1);
         AActor* NewSelection = nullptr;
-        if (FCogWindowWidgets::MenuActorsCombo("CollisionTesters", NewSelection, *GetWorld(), ACogEngineCollisionTester::StaticClass()))
+        if (FCogWidgets::MenuActorsCombo("CollisionTesters", NewSelection, *GetWorld(), ACogEngineCollisionTester::StaticClass()))
         {
-            FCogDebug::SetSelection(GetWorld(), NewSelection);
+            FCogDebug::SetSelection(NewSelection);
         }
 
         ImGui::EndMenuBar();
@@ -111,28 +103,41 @@ void FCogEngineWindow_CollisionTester::RenderContent()
     if (const APlayerController* LocalPlayerController = GetLocalPlayerController())
     {
         StartGizmo.Draw("CollisionTesterStartGizmo", *LocalPlayerController, *CollisionTester->StartComponent);
-        EndGizmo.Draw("CollisionTesterEndGizmo", *LocalPlayerController, *CollisionTester->EndComponent, ECogDebug_GizmoFlags::NoRotation | ECogDebug_GizmoFlags::NoScale);
+
+        if (CollisionTester->Type != ECogEngine_CollisionQueryType::Overlap)
+        {
+            EndGizmo.Draw("CollisionTesterEndGizmo", *LocalPlayerController, *CollisionTester->EndComponent, ECogDebug_GizmoFlags::NoRotation | ECogDebug_GizmoFlags::NoScale);
+        }
     }
 
-    FCogWindowWidgets::SetNextItemToShortWidth();
-    FCogWindowWidgets::ComboboxEnum("Type", CollisionTester->Type);
+    FCogWidgets::SetNextItemToShortWidth();
+    FCogWidgets::ComboboxEnum("Type", CollisionTester->Type);
 
-    FCogWindowWidgets::SetNextItemToShortWidth();
-    FCogWindowWidgets::ComboboxEnum("Mode", CollisionTester->Mode);
+    if (CollisionTester->Type == ECogEngine_CollisionQueryType::Overlap)
+    {
+        FCogWidgets::SetNextItemToShortWidth();
+        FCogWidgets::ComboboxEnum("Mode", CollisionTester->OverlapMode);        
+    }
+    else
+    {
+        FCogWidgets::SetNextItemToShortWidth();
+        FCogWidgets::ComboboxEnum("Mode", CollisionTester->TraceMode);        
+    }
 
-    FCogWindowWidgets::SetNextItemToShortWidth();
-    FCogWindowWidgets::ComboboxEnum("By", CollisionTester->By);
+
+    FCogWidgets::SetNextItemToShortWidth();
+    FCogWidgets::ComboboxEnum("By", CollisionTester->By);
 
     //-------------------------------------------------
     // Channel
     //-------------------------------------------------
     if (CollisionTester->By == ECogEngine_CollisionQueryBy::Channel)
     {
-        FCogWindowWidgets::SetNextItemToShortWidth();
-        ECollisionChannel Channel = CollisionTester->Channel.GetValue();
-        if (FCogWindowWidgets::ComboCollisionChannel("Channel", Channel))
+        FCogWidgets::SetNextItemToShortWidth();
+        ECollisionChannel Channel = CollisionTester->TraceChannel.GetValue();
+        if (FCogWidgets::ComboTraceChannel("Channel", Channel))
         {
-            CollisionTester->Channel = Channel;
+            CollisionTester->TraceChannel = Channel;
         }
     }
     //-------------------------------------------------
@@ -143,7 +148,7 @@ void FCogEngineWindow_CollisionTester::RenderContent()
         const FCollisionResponseTemplate* SelectedProfile = CollisionProfile->GetProfileByIndex(CollisionTester->ProfileIndex);
         const FName SelectedProfileName = SelectedProfile != nullptr ? SelectedProfile->Name : FName("Custom");
 
-        FCogWindowWidgets::SetNextItemToShortWidth();
+        FCogWidgets::SetNextItemToShortWidth();
         if (ImGui::BeginCombo("Profile", TCHAR_TO_ANSI(*SelectedProfileName.ToString()), ImGuiComboFlags_HeightLargest))
         {
             for (int i = 0; i < CollisionProfile->GetNumOfProfiles(); ++i)
@@ -153,13 +158,12 @@ void FCogEngineWindow_CollisionTester::RenderContent()
                 {
                     CollisionTester->ProfileIndex = i;
                     CollisionTester->ObjectTypesToQuery = 0;
-                    SelectedProfile = CollisionProfile->GetProfileByIndex(CollisionTester->ProfileIndex);
 
                     if (Profile->CollisionEnabled != ECollisionEnabled::NoCollision)
                     {
                         for (int j = 0; j < ECC_MAX; ++j)
                         {
-	                        const ECollisionResponse Response = Profile->ResponseToChannels.GetResponse((ECollisionChannel)j);
+	                        const ECollisionResponse Response = Profile->ResponseToChannels.GetResponse(static_cast<ECollisionChannel>(j));
                             if (Response != ECR_Ignore)
                             {
                                 CollisionTester->ObjectTypesToQuery |= ECC_TO_BITFIELD(j);
@@ -180,31 +184,31 @@ void FCogEngineWindow_CollisionTester::RenderContent()
 
     if (CollisionTester->Type != ECogEngine_CollisionQueryType::LineTrace)
     {
-        FCogWindowWidgets::SetNextItemToShortWidth();
-        FCogWindowWidgets::ComboboxEnum("Shape", CollisionTester->Shape);
+        FCogWidgets::SetNextItemToShortWidth();
+        FCogWidgets::ComboboxEnum("Shape", CollisionTester->Shape);
 
         switch (CollisionTester->Shape)
         {
         case ECogEngine_CollisionQueryShape::Sphere:
         {
-            FCogWindowWidgets::SetNextItemToShortWidth();
+            FCogWidgets::SetNextItemToShortWidth();
             FCogImguiHelper::DragDouble("Sphere Radius", &CollisionTester->ShapeExtent.X, 1.0f, 0, FLT_MAX, "%.1f");
             break;
         }
 
         case ECogEngine_CollisionQueryShape::Box:
         {
-            FCogWindowWidgets::SetNextItemToShortWidth();
+            FCogWidgets::SetNextItemToShortWidth();
             FCogImguiHelper::DragFVector("Box Extent", CollisionTester->ShapeExtent, 1.0f, 0, FLT_MAX, "%.1f");
             break;
         }
 
         case ECogEngine_CollisionQueryShape::Capsule:
         {
-            FCogWindowWidgets::SetNextItemToShortWidth();
+            FCogWidgets::SetNextItemToShortWidth();
             FCogImguiHelper::DragDouble("Capsule Radius", &CollisionTester->ShapeExtent.X, 1.0f, 0, FLT_MAX, "%.1f");
 
-            FCogWindowWidgets::SetNextItemToShortWidth();
+            FCogWidgets::SetNextItemToShortWidth();
             FCogImguiHelper::DragDouble("Capsule Half Height", &CollisionTester->ShapeExtent.Z, 1.0f, 0, FLT_MAX, "%.1f");
             break;
         }
@@ -218,12 +222,12 @@ void FCogEngineWindow_CollisionTester::RenderContent()
     {
         ImGui::Separator();
         ImGui::BeginDisabled();
-        FCogWindowWidgets::CollisionProfileChannels(CollisionTester->ObjectTypesToQuery);
+        FCogWidgets::CollisionProfileChannels(CollisionTester->ObjectTypesToQuery);
         ImGui::EndDisabled();
     }
     else if (CollisionTester->By == ECogEngine_CollisionQueryBy::ObjectType)
     {
         ImGui::Separator();
-        FCogWindowWidgets::CollisionProfileChannels(CollisionTester->ObjectTypesToQuery);
+        FCogWidgets::CollisionObjectTypeChannels(CollisionTester->ObjectTypesToQuery);
     }
 }

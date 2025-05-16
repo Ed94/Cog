@@ -3,6 +3,7 @@
 #include "CogCommon.h"
 #include "CogCommonPossessorInterface.h"
 #include "CogEngineDataAsset.h"
+#include "CogSubsystem.h"
 #include "Engine/EngineTypes.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
@@ -32,12 +33,13 @@ ACogEngineReplicator* ACogEngineReplicator::Spawn(APlayerController* Controller)
 //--------------------------------------------------------------------------------------------------------------------------
 ACogEngineReplicator* ACogEngineReplicator::GetLocalReplicator(const UWorld& World)
 {
-    for (TActorIterator<ACogEngineReplicator> It(&World, StaticClass()); It; ++It)
+    const TActorIterator<ACogEngineReplicator> It(&World, StaticClass());
+    if (It)
     {
         ACogEngineReplicator* Replicator = *It;
         return Replicator;
     }
-
+    
     return nullptr;
 }
 
@@ -226,20 +228,24 @@ void ACogEngineReplicator::Server_DeleteActor_Implementation(AActor* Actor)
 void ACogEngineReplicator::Server_ApplyCheat_Implementation(const AActor* CheatInstigator, const TArray<AActor*>& Targets, const FCogEngineCheat& Cheat) const
 {
     if (Cheat.Execution == nullptr)
-    {
-        return;
-    }
+    { return; }
 
-    Cheat.Execution->Execute(CheatInstigator, Targets);
+    if (GetWorld() == nullptr)
+    { return; }
+
+    Cheat.Execution->Execute(GetWorld(), CheatInstigator, Targets);
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
-ECogEngineCheat_ActiveState ACogEngineReplicator::IsCheatActiveOnTargets(const TArray<AActor*>& Targets, const FCogEngineCheat& Cheat)
+ECogEngineCheat_ActiveState ACogEngineReplicator::IsCheatActiveOnTargets(const TArray<AActor*>& Targets, const FCogEngineCheat& Cheat) const
 {
+    if (GetWorld() == nullptr)
+    { return ECogEngineCheat_ActiveState::Inactive; }
+    
     if (Cheat.Execution == nullptr)
     {
         return ECogEngineCheat_ActiveState::Inactive;
     }
 
-    return Cheat.Execution->IsActiveOnTargets(Targets);
+    return Cheat.Execution->IsActiveOnTargets(GetWorld(), Targets);
 }

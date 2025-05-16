@@ -4,7 +4,7 @@
 #include "AbilitySystemComponent.h"
 #include "CogAbilityHelper.h"
 #include "CogImguiHelper.h"
-#include "CogWindowWidgets.h"
+#include "CogWidgets.h"
 #include "imgui.h"
 
 class UCogAbilityConfig_Tasks;
@@ -14,7 +14,6 @@ void FCogAbilityWindow_Tasks::Initialize()
     Super::Initialize();
 
     bHasMenu = true;
-    bNoPadding = true;
 
     Config = GetConfig<UCogAbilityConfig_Tasks>();
 }
@@ -27,17 +26,15 @@ void FCogAbilityWindow_Tasks::RenderHelp()
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
-void FCogAbilityWindow_Tasks::ResetConfig()
+void FCogAbilityWindow_Tasks::PreBegin(ImGuiWindowFlags& WindowFlags)
 {
-    Super::ResetConfig();
-
-    Config->Reset();
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
-void FCogAbilityWindow_Tasks::RenderTick(float DetlaTime)
+void FCogAbilityWindow_Tasks::PostBegin()
 {
-    Super::RenderTick(DetlaTime);
+    ImGui::PopStyleVar();
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
@@ -82,11 +79,11 @@ void FCogAbilityWindow_Tasks::RenderTaskMenu(AActor* Selection)
 
             ImGui::Separator();
 
-            ImGui::ColorEdit4("Uninitialized Color", (float*)&Config->UninitializedColor, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
-            ImGui::ColorEdit4("Awaiting Activation Color", (float*)&Config->AwaitingActivationColor, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
-            ImGui::ColorEdit4("Active Color", (float*)&Config->ActiveColor, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
-            ImGui::ColorEdit4("Paused Color", (float*)&Config->PausedColor, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
-            ImGui::ColorEdit4("Finished Color", (float*)&Config->FinishedColor, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
+            ImGui::ColorEdit4("Uninitialized Color", &Config->UninitializedColor.X, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
+            ImGui::ColorEdit4("Awaiting Activation Color", &Config->AwaitingActivationColor.X, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
+            ImGui::ColorEdit4("Active Color", &Config->ActiveColor.X, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
+            ImGui::ColorEdit4("Paused Color", &Config->PausedColor.X, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
+            ImGui::ColorEdit4("Finished Color", &Config->FinishedColor.X, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
 
             ImGui::Separator();
 
@@ -98,7 +95,7 @@ void FCogAbilityWindow_Tasks::RenderTaskMenu(AActor* Selection)
             ImGui::EndMenu();
         }
 
-        FCogWindowWidgets::SearchBar(Filter);
+        FCogWidgets::SearchBar("##Filter", Filter);
 
         ImGui::EndMenuBar();
     }
@@ -109,8 +106,6 @@ void FCogAbilityWindow_Tasks::RenderTasksTable(UAbilitySystemComponent& AbilityS
 {
     TArray<const UGameplayTask*> FilteredTasks;
     FilteredTasks.Reserve(16);
-
-    const AActor* Selection = GetSelection();
 
     for (FConstGameplayTaskIterator it = AbilitySystemComponent.GetKnownTaskIterator(); it; ++it)
     {
@@ -234,10 +229,10 @@ void FCogAbilityWindow_Tasks::RenderTasksTable(UAbilitySystemComponent& AbilityS
                 //------------------------
                 // Popup
                 //------------------------
-                if (FCogWindowWidgets::BeginItemTableTooltip())
+                if (FCogWidgets::BeginItemTableTooltip())
                 {
                     RenderTaskInfo(Task);
-                    FCogWindowWidgets::EndItemTableTooltip();
+                    FCogWidgets::EndItemTableTooltip();
                 }
 
                 //------------------------
@@ -319,7 +314,7 @@ void FCogAbilityWindow_Tasks::RenderTaskInfo(const UGameplayTask* Task)
         ImGui::TableNextColumn();
         ImGui::TextColored(TextColor, "Priority");
         ImGui::TableNextColumn();
-        ImGui::Text("%d", (int32)Task->GetPriority());
+        ImGui::Text("%d", static_cast<int32>(Task->GetPriority()));
 
         //------------------------
         // IsTicking
@@ -355,7 +350,7 @@ void FCogAbilityWindow_Tasks::RenderTaskInfo(const UGameplayTask* Task)
         ImGui::TableNextColumn();
         ImGui::TextColored(TextColor, "Debug");
         ImGui::TableNextColumn();
-        ImGui::PushTextWrapPos(FCogWindowWidgets::GetFontWidth() * 80);
+        ImGui::PushTextWrapPos(FCogWidgets::GetFontWidth() * 80);
         ImGui::Text("%s", StringCast<ANSICHAR>(*Task->GetDebugString()).Get());
         ImGui::PopTextWrapPos();
 
@@ -388,23 +383,23 @@ void FCogAbilityWindow_Tasks::RenderTaskState(const UGameplayTask* Task)
     switch (Task->GetState())
     {
     case EGameplayTaskState::Uninitialized:
-        FCogWindowWidgets::SmallButton("Uninitialized", FCogImguiHelper::ToImVec4(Config->UninitializedColor));
+        FCogWidgets::SmallButton("Uninitialized", FCogImguiHelper::ToImVec4(Config->UninitializedColor));
         break;
 
     case EGameplayTaskState::AwaitingActivation:
-        FCogWindowWidgets::SmallButton("Awaiting Activation", FCogImguiHelper::ToImVec4(Config->AwaitingActivationColor));
+        FCogWidgets::SmallButton("Awaiting Activation", FCogImguiHelper::ToImVec4(Config->AwaitingActivationColor));
         break;
 
     case EGameplayTaskState::Active:
-        FCogWindowWidgets::SmallButton("Active", FCogImguiHelper::ToImVec4(Config->ActiveColor));
+        FCogWidgets::SmallButton("Active", FCogImguiHelper::ToImVec4(Config->ActiveColor));
         break;
 
     case EGameplayTaskState::Paused:
-        FCogWindowWidgets::SmallButton("Paused", FCogImguiHelper::ToImVec4(Config->PausedColor));
+        FCogWidgets::SmallButton("Paused", FCogImguiHelper::ToImVec4(Config->PausedColor));
         break;
 
     case EGameplayTaskState::Finished:
-        FCogWindowWidgets::SmallButton("Finished", FCogImguiHelper::ToImVec4(Config->FinishedColor));
+        FCogWidgets::SmallButton("Finished", FCogImguiHelper::ToImVec4(Config->FinishedColor));
         break;
     }
 }

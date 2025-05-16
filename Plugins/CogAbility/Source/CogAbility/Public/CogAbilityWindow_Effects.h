@@ -34,7 +34,9 @@ protected:
 
     virtual void RenderTick(float DeltaTime) override;
 
-    virtual void ResetConfig() override;
+    virtual void PreBegin(ImGuiWindowFlags& WindowFlags) override;
+
+    virtual void PostBegin() override;
 
     virtual void RenderEffectsTable();
 

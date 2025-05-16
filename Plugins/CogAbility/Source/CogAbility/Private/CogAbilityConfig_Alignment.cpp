@@ -24,26 +24,55 @@ FVector4f UCogAbilityConfig_Alignment::GetAttributeColor(const UAbilitySystemCom
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
-FVector4f UCogAbilityConfig_Alignment::GetEffectColor(const UCogAbilityDataAsset* Asset, const UGameplayEffect& Effect) const
+bool UCogAbilityConfig_Alignment::GetAbilityColor(const UCogAbilityDataAsset* Asset, const UGameplayAbility& Ability, FLinearColor& OutColor) const
 {
     if (Asset == nullptr)
     {
-        return NeutralColor;
+        OutColor = NeutralColor;
+        return false;
+    }
+
+    const FGameplayTagContainer& Tags = Ability.GetAssetTags();
+    if (Tags.HasTag(Asset->NegativeAbilityTag))
+    {
+        OutColor = NegativeColor;
+        return true;
+    }
+
+    if (Tags.HasTag(Asset->PositiveAbilityTag))
+    {
+        OutColor = PositiveColor;
+        return true;
+    }
+
+    OutColor = NeutralColor;
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------
+bool UCogAbilityConfig_Alignment::GetEffectColor(const UCogAbilityDataAsset* Asset, const UGameplayEffect& Effect, FLinearColor& OutColor) const
+{
+    if (Asset == nullptr)
+    {
+        OutColor = NeutralColor;
+        return false;
     }
 
     const FGameplayTagContainer& Tags = Effect.GetAssetTags();
-
     if (Tags.HasTag(Asset->NegativeEffectTag))
     {
-        return NegativeColor;
+        OutColor = NegativeColor;
+        return true;
     }
 
     if (Tags.HasTag(Asset->PositiveEffectTag))
     {
-        return PositiveColor;
+        OutColor = PositiveColor;
+        return true;
     }
 
-    return NeutralColor;
+    OutColor = NeutralColor;
+    return true;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
@@ -57,62 +86,53 @@ FVector4f UCogAbilityConfig_Alignment::GetEffectModifierColor(float ModifierValu
 {
     switch (ModifierOp)
     {
-        case EGameplayModOp::Additive:
+        case EGameplayModOp::AddBase:
+        case EGameplayModOp::AddFinal:
         {
             if (ModifierValue > 0.0f)
-            {
-                return PositiveColor;
-            }
+            { return PositiveColor; }
 
             if (ModifierValue < 0.0f)
-            {
-                return NegativeColor;
-            }
-            break;
+            { return NegativeColor; }
+                
+            return NeutralColor;
         }
 
-        case EGameplayModOp::Multiplicitive:
+        case EGameplayModOp::MultiplyAdditive:
+        case EGameplayModOp::MultiplyCompound:
         {
             if (ModifierValue > 1.0f)
-            {
-                return PositiveColor;
-            }
-            else if (ModifierValue < 1.0f)
-            {
-                return NegativeColor;
-            }
-            break;
+            { return PositiveColor; }
+
+            if (ModifierValue < 1.0f)
+            { return NegativeColor; }
+                
+            return NeutralColor;
         }
 
-        case EGameplayModOp::Division:
+        case EGameplayModOp::DivideAdditive:
         {
             if (ModifierValue < 1.0f)
-            {
-                return PositiveColor;
-            }
+            { return PositiveColor; }
 
             if (ModifierValue > 1.0f)
-            {
-                return NegativeColor;
-            }
-            break;
+            { return NegativeColor; }
+                
+            return NeutralColor;
         }
 
         case EGameplayModOp::Override:
         {
             if (ModifierValue > BaseValue)
-            {
-                return PositiveColor;
-            }
+            { return PositiveColor; }
 
             if (ModifierValue < BaseValue)
-            {
-                return NegativeColor;
-            }
-            break;
-        }
-    }
+            { return NegativeColor; }
 
-    return NeutralColor;
+            return NeutralColor;
+        }
+
+        default: return NeutralColor;
+    }
 }
 

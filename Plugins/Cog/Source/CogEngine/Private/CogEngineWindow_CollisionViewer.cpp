@@ -2,9 +2,8 @@
 
 #include "CogDebugDrawHelper.h"
 #include "CogDebug.h"
-#include "CogEngineCollisionTester.h"
 #include "CogImguiHelper.h"
-#include "CogWindowWidgets.h"
+#include "CogWidgets.h"
 #include "Components/PrimitiveComponent.h"
 #include "Components/SceneComponent.h"
 #include "DrawDebugHelpers.h"
@@ -30,14 +29,6 @@ void FCogEngineWindow_CollisionViewer::RenderHelp()
     ImGui::Text("This window is used to inspect collisions by performing a collision query with the selected channels. "
         "The query can be configured in the options. "
     );
-}
-
-//--------------------------------------------------------------------------------------------------------------------------
-void FCogEngineWindow_CollisionViewer::ResetConfig() 
-{
-    Super::ResetConfig();
-
-    Config->Reset();
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
@@ -128,7 +119,7 @@ void FCogEngineWindow_CollisionViewer::RenderContent()
                 {
                     for (int j = 0; j < ECC_MAX; ++j)
                     {
-                        ECollisionResponse Response = Profile->ResponseToChannels.GetResponse((ECollisionChannel)j);
+                        ECollisionResponse Response = Profile->ResponseToChannels.GetResponse(static_cast<ECollisionChannel>(j));
                         if (Response != ECR_Ignore)
                         {
                             Config->ObjectTypesToQuery |= ECC_TO_BITFIELD(j);
@@ -141,7 +132,7 @@ void FCogEngineWindow_CollisionViewer::RenderContent()
     }
     ImGui::Separator();
 
-    FCogWindowWidgets::CollisionProfileChannels(Config->ObjectTypesToQuery);
+    FCogWidgets::CollisionObjectTypeChannels(Config->ObjectTypesToQuery);
 
     //-------------------------------------------------
     // Perform Query
@@ -190,6 +181,8 @@ void FCogEngineWindow_CollisionViewer::RenderContent()
             QueryRadius = Config->QueryThickness;
             break;
         }
+
+        default: break;
     }
 
     static const FName TraceTag(TEXT("FCogWindow_Collision"));

@@ -1,7 +1,7 @@
 #include "CogAIWindow_Blackboard.h"
 
 #include "AIController.h"
-#include "CogWindowWidgets.h"
+#include "CogWidgets.h"
 #include "BrainComponent.h"
 #include "GameFramework/Pawn.h"
 #include "BehaviorTree/BlackboardComponent.h"
@@ -12,7 +12,6 @@ void FCogAIWindow_Blackboard::Initialize()
     Super::Initialize();
 
     bHasMenu = true;
-    bNoPadding = true;
 
     Config = GetConfig<UCogAIConfig_Blackboard>();
 }
@@ -26,11 +25,16 @@ void FCogAIWindow_Blackboard::RenderHelp()
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
-void FCogAIWindow_Blackboard::ResetConfig()
+void FCogAIWindow_Blackboard::PreBegin(ImGuiWindowFlags& WindowFlags)
 {
-    Super::ResetConfig();
-    
-    Config->Reset();
+    WindowFlags |= ImGuiWindowFlags_NoScrollbar;
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+}
+
+//--------------------------------------------------------------------------------------------------------------------------
+void FCogAIWindow_Blackboard::PostBegin()
+{
+    ImGui::PopStyleVar();
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
@@ -46,7 +50,7 @@ void FCogAIWindow_Blackboard::RenderContent()
             ImGui::EndMenu();
         }
 
-        FCogWindowWidgets::SearchBar(Filter);
+        FCogWidgets::SearchBar("##Filter", Filter);
 
         ImGui::EndMenuBar();
     }

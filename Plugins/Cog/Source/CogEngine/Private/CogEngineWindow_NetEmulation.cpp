@@ -1,7 +1,8 @@
 #include "CogEngineWindow_NetEmulation.h"
 
 #include "CogEngineWindow_Stats.h"
-#include "CogWindowWidgets.h"
+#include "CogImguiHelper.h"
+#include "CogWidgets.h"
 #include "Engine/Engine.h"
 #include "Engine/NetConnection.h"
 #include "Engine/NetDriver.h"
@@ -14,6 +15,25 @@
 void FCogEngineWindow_NetEmulation::RenderHelp()
 {
     ImGui::Text("This window is used to configure the network emulation.");
+}
+
+//--------------------------------------------------------------------------------------------------------------------------
+void FCogEngineWindow_NetEmulation::Initialize()
+{
+    Super::Initialize();
+    
+    Config = GetConfig<UCogEngineWindowConfig_Stats>();
+}
+
+//--------------------------------------------------------------------------------------------------------------------------
+void FCogEngineWindow_NetEmulation::RenderContextMenu()
+{
+    Config->RenderColorConfig();
+    Config->RenderPingConfig();
+    Config->RenderPacketLossConfig();
+    
+    ImGui::Separator();
+    FCogWindow::RenderContextMenu();
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
@@ -42,7 +62,7 @@ void FCogEngineWindow_NetEmulation::DrawStats()
         const float Ping = PlayerState->GetPingInMilliseconds();
         ImGui::Text("Ping            ");
         ImGui::SameLine();
-        ImGui::TextColored(FCogEngineWindow_Stats::GetPingColor(Ping), "%0.0fms", Ping);
+        ImGui::TextColored(Config->GetPingColor(Ping), "%0.0fms", Ping);
     }
 
     if (UNetConnection* Connection = PlayerController->GetNetConnection())
@@ -50,12 +70,12 @@ void FCogEngineWindow_NetEmulation::DrawStats()
         const float OutPacketLost = Connection->GetOutLossPercentage().GetAvgLossPercentage() * 100.0f;
         ImGui::Text("Packet Loss Out ");
         ImGui::SameLine();
-        ImGui::TextColored(FCogEngineWindow_Stats::GetPacketLossColor(OutPacketLost), "%0.0f%%", OutPacketLost);
+        ImGui::TextColored(Config->GetPacketLossColor(OutPacketLost), "%0.0f%%", OutPacketLost);
 
         const float InPacketLost = Connection->GetInLossPercentage().GetAvgLossPercentage() * 100.0f;
         ImGui::Text("Packet Loss In  ");
         ImGui::SameLine();
-        ImGui::TextColored(FCogEngineWindow_Stats::GetPacketLossColor(InPacketLost), "%0.0f%%", InPacketLost);
+        ImGui::TextColored(Config->GetPacketLossColor(InPacketLost), "%0.0f%%", InPacketLost);
     }
 }
 
@@ -82,7 +102,7 @@ void FCogEngineWindow_NetEmulation::DrawControls()
         return;
     }
 
-    FCogWindowWidgets::SetNextItemToShortWidth();
+    FCogWidgets::SetNextItemToShortWidth();
     if (ImGui::BeginCombo("Driver", TCHAR_TO_ANSI(*SelectedNetDriver->NetDriver->GetName())))
     {
         int i = 0;
@@ -113,7 +133,7 @@ void FCogEngineWindow_NetEmulation::DrawControls()
     FPacketSimulationSettings Settings = SelectedNetDriver->NetDriver->PacketSimulationSettings;
 
     //-------------------------------------------------------------------------------------------
-    FCogWindowWidgets::SetNextItemToShortWidth();
+    FCogWidgets::SetNextItemToShortWidth();
     if (ImGui::DragInt("Lag Min", &Settings.PktLagMin, 5.0f, 0, INT_MAX, "%d ms"))
     {
         SelectedNetDriver->NetDriver->SetPacketSimulationSettings(Settings);
@@ -125,7 +145,7 @@ void FCogEngineWindow_NetEmulation::DrawControls()
     }
 
     //-------------------------------------------------------------------------------------------
-    FCogWindowWidgets::SetNextItemToShortWidth();
+    FCogWidgets::SetNextItemToShortWidth();
     if (ImGui::DragInt("Lag Max", &Settings.PktLagMax, 5.0f, 0, INT_MAX, "%d ms"))
     {
         SelectedNetDriver->NetDriver->SetPacketSimulationSettings(Settings);
@@ -137,7 +157,7 @@ void FCogEngineWindow_NetEmulation::DrawControls()
     }
 
 
-    FCogWindowWidgets::SetNextItemToShortWidth();
+    FCogWidgets::SetNextItemToShortWidth();
     if (ImGui::SliderInt("Packet Loss", &Settings.PktLoss, 0, 100, "%d%%"))
     {
         SelectedNetDriver->NetDriver->SetPacketSimulationSettings(Settings);
@@ -153,7 +173,7 @@ void FCogEngineWindow_NetEmulation::DrawControls()
     }
 
     //-------------------------------------------------------------------------------------------
-    FCogWindowWidgets::SetNextItemToShortWidth();
+    FCogWidgets::SetNextItemToShortWidth();
     if (ImGui::SliderInt("Packet Order", &Settings.PktOrder, 0, 100, "%d%%"))
     {
         SelectedNetDriver->NetDriver->SetPacketSimulationSettings(Settings);
@@ -168,7 +188,7 @@ void FCogEngineWindow_NetEmulation::DrawControls()
     }
 
     //-------------------------------------------------------------------------------------------
-    FCogWindowWidgets::SetNextItemToShortWidth();
+    FCogWidgets::SetNextItemToShortWidth();
     if (ImGui::SliderInt("Packet Dup", &Settings.PktDup, 0, 100, "%d%%"))
     {
         SelectedNetDriver->NetDriver->SetPacketSimulationSettings(Settings);
@@ -186,7 +206,7 @@ void FCogEngineWindow_NetEmulation::DrawControls()
     ImGui::Separator();
 
     //-------------------------------------------------------------------------------------------
-    FCogWindowWidgets::SetNextItemToShortWidth();
+    FCogWidgets::SetNextItemToShortWidth();
     if (ImGui::DragInt("Incoming Lag Min", &Settings.PktIncomingLagMin, 5.0f, 0, INT_MAX, "%d ms"))
     {
         SelectedNetDriver->NetDriver->SetPacketSimulationSettings(Settings);
@@ -198,7 +218,7 @@ void FCogEngineWindow_NetEmulation::DrawControls()
     }
 
     //-------------------------------------------------------------------------------------------
-    FCogWindowWidgets::SetNextItemToShortWidth();
+    FCogWidgets::SetNextItemToShortWidth();
     if (ImGui::DragInt("Incoming Lag Max", &Settings.PktIncomingLagMax, 5.0f, 0, INT_MAX, "%d ms"))
     {
         SelectedNetDriver->NetDriver->SetPacketSimulationSettings(Settings);
@@ -210,7 +230,7 @@ void FCogEngineWindow_NetEmulation::DrawControls()
     }
 
     //-------------------------------------------------------------------------------------------
-    FCogWindowWidgets::SetNextItemToShortWidth();
+    FCogWidgets::SetNextItemToShortWidth();
     if (ImGui::SliderInt("Incoming Packet Loss", &Settings.PktIncomingLoss, 0, 100, "%d%%"))
     {
         SelectedNetDriver->NetDriver->SetPacketSimulationSettings(Settings);

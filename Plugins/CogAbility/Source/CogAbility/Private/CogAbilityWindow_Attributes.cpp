@@ -6,7 +6,7 @@
 #include "CogAbilityDataAsset.h"
 #include "CogAbilityHelper.h"
 #include "CogImguiHelper.h"
-#include "CogWindowWidgets.h"
+#include "CogWidgets.h"
 #include "AttributeSet.h"
 #include "CogAbilityWindow_Abilities.h"
 #include "imgui_internal.h"
@@ -17,7 +17,6 @@ void FCogAbilityWindow_Attributes::Initialize()
     Super::Initialize();
 
     bHasMenu = true;
-    bNoPadding = true;
 
     Config = GetConfig<UCogAbilityConfig_Attributes>();
     AlignmentConfig = GetConfig<UCogAbilityConfig_Alignment>();
@@ -36,11 +35,15 @@ void FCogAbilityWindow_Attributes::RenderHelp()
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
-void FCogAbilityWindow_Attributes::ResetConfig()
+void FCogAbilityWindow_Attributes::PreBegin(ImGuiWindowFlags& WindowFlags)
 {
-    Super::ResetConfig();
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+}
 
-    Config->Reset();
+//--------------------------------------------------------------------------------------------------------------------------
+void FCogAbilityWindow_Attributes::PostBegin()
+{
+    ImGui::PopStyleVar();
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
@@ -90,16 +93,16 @@ void FCogAbilityWindow_Attributes::RenderContent()
             ImGui::Checkbox("Group by Category", &Config->GroupByCategory);
             ImGui::Checkbox("Show Only Modified", &Config->ShowOnlyModified);
 
-            FCogWindowWidgets::SetNextItemToShortWidth();
-            FCogWindowWidgets::InputText("Attribute Set Prefixes", Config->AttributeSetPrefixes);
+            FCogWidgets::SetNextItemToShortWidth();
+            FCogWidgets::InputText("Attribute Set Prefixes", Config->AttributeSetPrefixes);
             ImGui::SetItemTooltip("Prefixes to remove from the attribute set name. Separate multiple prefixes with the semicolon character ';'");
 
             ImGui::Separator();
-            ImGui::ColorEdit4("Positive Color", (float*)&AlignmentConfig->PositiveColor, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
-            ImGui::ColorEdit4("Negative Color", (float*)&AlignmentConfig->NegativeColor, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
-            ImGui::ColorEdit4("Neutral Color", (float*)&AlignmentConfig->NeutralColor, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
-            ImGui::ColorEdit4("AttributeSet Color", (float*)&Config->AttributeSetColor, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
-            ImGui::ColorEdit4("Category Color", (float*)&Config->CategoryColor, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
+            ImGui::ColorEdit4("Positive Color", &AlignmentConfig->PositiveColor.X, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
+            ImGui::ColorEdit4("Negative Color", &AlignmentConfig->NegativeColor.X, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
+            ImGui::ColorEdit4("Neutral Color", &AlignmentConfig->NeutralColor.X, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
+            ImGui::ColorEdit4("AttributeSet Color", &Config->AttributeSetColor.X, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
+            ImGui::ColorEdit4("Category Color", &Config->CategoryColor.X, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
             ImGui::Separator();
             if (ImGui::MenuItem("Reset"))
             {
@@ -108,7 +111,7 @@ void FCogAbilityWindow_Attributes::RenderContent()
             ImGui::EndMenu();
         }
 
-        FCogWindowWidgets::SearchBar(Filter);
+        FCogWidgets::SearchBar("##Filter", Filter);
 
         ImGui::EndMenuBar();
     }
@@ -116,7 +119,7 @@ void FCogAbilityWindow_Attributes::RenderContent()
     const bool bGroupByAttributeSetValue = Filter.IsActive() == false && Config->ShowOnlyModified == false && Config->GroupByAttributeSet;
     const bool bGroupByCategoryValue = Filter.IsActive() == false && Config->ShowOnlyModified == false && Config->GroupByCategory;
     const float bShowGroup = bGroupByAttributeSetValue | bGroupByCategoryValue;
-    const float FirstColWidth = ((int32)bGroupByAttributeSetValue + (int32)bGroupByCategoryValue) * ImGui::GetFontSize() * 2;
+    const float FirstColWidth = (static_cast<int32>(bGroupByAttributeSetValue) + static_cast<int32>(bGroupByCategoryValue)) * ImGui::GetFontSize() * 2;
 
     if (ImGui::BeginTable("Attributes", 5, ImGuiTableFlags_SizingFixedFit 
                                          | ImGuiTableFlags_Resizable 
@@ -280,7 +283,7 @@ void FCogAbilityWindow_Attributes::RenderContent()
                             {
                                 Selected = Index;
 
-                                if (ImGui::IsMouseDoubleClicked(0))
+                                if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
                                 {
                                     OpenAttributeDetails(Attribute);
                                 }
@@ -289,10 +292,10 @@ void FCogAbilityWindow_Attributes::RenderContent()
                             //------------------------
                             // Popup
                             //------------------------
-                            if (FCogWindowWidgets::BeginItemTableTooltip())
+                            if (FCogWidgets::BeginItemTableTooltip())
                             {
                                 RenderAttributeDetails(*AbilitySystemComponent, AttributeSetNameStr.Get(), Attribute, true);
-                                FCogWindowWidgets::EndItemTableTooltip();
+                                FCogWidgets::EndItemTableTooltip();
                             }
 
                             //------------------------
@@ -446,7 +449,7 @@ void FCogAbilityWindow_Attributes::RenderAttributeDetails(const UAbilitySystemCo
                 char Buffer[128];
                 ImFormatString(Buffer, IM_ARRAYSIZE(Buffer), "Modifier %d", ModifierIndex);
 
-                if (FCogWindowWidgets::DarkCollapsingHeader(Buffer, ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_DefaultOpen))
+                if (FCogWidgets::DarkCollapsingHeader(Buffer, ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_DefaultOpen))
                 {
                     if (ImGui::BeginTable("Details", 2, TableFlags))
                     {

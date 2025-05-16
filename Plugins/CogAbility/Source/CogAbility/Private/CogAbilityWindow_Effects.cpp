@@ -7,7 +7,7 @@
 #include "CogAbilityDataAsset.h"
 #include "CogAbilityHelper.h"
 #include "CogImguiHelper.h"
-#include "CogWindowWidgets.h"
+#include "CogWidgets.h"
 #include "Engine/World.h"
 
 //--------------------------------------------------------------------------------------------------------------------------
@@ -16,7 +16,6 @@ void FCogAbilityWindow_Effects::Initialize()
     Super::Initialize();
 
     bHasMenu = true;
-    bNoPadding = true;
 
     Asset = GetAsset<UCogAbilityDataAsset>();
     Config = GetConfig<UCogAbilityConfig_Effects>();
@@ -33,21 +32,25 @@ void FCogAbilityWindow_Effects::RenderHelp()
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
-void FCogAbilityWindow_Effects::ResetConfig()
-{
-    Super::ResetConfig();
-
-    Config->Reset();
-    AlignmentConfig->Reset();
-}
-
-//--------------------------------------------------------------------------------------------------------------------------
 void FCogAbilityWindow_Effects::RenderTick(float DeltaTime)
 {
     Super::RenderTick(DeltaTime);
 
     RenderOpenEffects();
 }
+
+//--------------------------------------------------------------------------------------------------------------------------
+void FCogAbilityWindow_Effects::PreBegin(ImGuiWindowFlags& WindowFlags)
+{
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+}
+
+//--------------------------------------------------------------------------------------------------------------------------
+void FCogAbilityWindow_Effects::PostBegin()
+{
+    ImGui::PopStyleVar();
+}
+
 
 //--------------------------------------------------------------------------------------------------------------------------
 void FCogAbilityWindow_Effects::RenderContent()
@@ -62,9 +65,9 @@ void FCogAbilityWindow_Effects::RenderContent()
             ImGui::Checkbox("Sort by Alignment", &Config->SortByAlignment);
             
             ImGui::Separator();
-            ImGui::ColorEdit4("Positive Color", (float*)&AlignmentConfig->PositiveColor, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
-            ImGui::ColorEdit4("Negative Color", (float*)&AlignmentConfig->NegativeColor, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
-            ImGui::ColorEdit4("Neutral Color", (float*)&AlignmentConfig->NeutralColor, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
+            ImGui::ColorEdit4("Positive Color", &AlignmentConfig->PositiveColor.X, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
+            ImGui::ColorEdit4("Negative Color", &AlignmentConfig->NegativeColor.X, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
+            ImGui::ColorEdit4("Neutral Color", &AlignmentConfig->NeutralColor.X, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaPreviewHalf);
             
             ImGui::Separator();
             if (ImGui::MenuItem("Reset"))
@@ -74,7 +77,7 @@ void FCogAbilityWindow_Effects::RenderContent()
             ImGui::EndMenu();
         }
 
-        FCogWindowWidgets::SearchBar(Filter);
+        FCogWidgets::SearchBar("##Filter", Filter);
 
         ImGui::EndMenuBar();
     }
@@ -137,7 +140,6 @@ void FCogAbilityWindow_Effects::RenderEffectsTable()
                     }
                 }
 
-                bool AlignmentOrder = false;
                 if (Config->SortByAlignment && Asset != nullptr)
                 {
                     const FGameplayTagContainer& Tags1 = Effect1->GetAssetTags();
@@ -201,7 +203,9 @@ void FCogAbilityWindow_Effects::RenderEffectRow(UAbilitySystemComponent& Ability
     //------------------------
     ImGui::TableNextColumn();
 
-    ImGui::PushStyleColor(ImGuiCol_Text, FCogImguiHelper::ToImVec4(AlignmentConfig->GetEffectColor(Asset, Effect)));
+    FLinearColor Color;
+    AlignmentConfig->GetEffectColor(Asset, Effect, Color);
+    ImGui::PushStyleColor(ImGuiCol_Text, FCogImguiHelper::ToImVec4(Color));
 
     if (ImGui::Selectable(EffectName.Get(), Selected == Index, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap | ImGuiSelectableFlags_AllowDoubleClick))
     {
@@ -213,10 +217,10 @@ void FCogAbilityWindow_Effects::RenderEffectRow(UAbilitySystemComponent& Ability
     //------------------------
     // Popup
     //------------------------
-    if (FCogWindowWidgets::BeginItemTableTooltip())
+    if (FCogWidgets::BeginItemTableTooltip())
     {
         RenderEffectInfo(AbilitySystemComponent, ActiveEffect, Effect);
-        FCogWindowWidgets::EndItemTableTooltip();
+        FCogWidgets::EndItemTableTooltip();
     }
 
     //------------------------
@@ -246,7 +250,7 @@ void FCogAbilityWindow_Effects::RenderEffectRow(UAbilitySystemComponent& Ability
             ImGui::CloseCurrentPopup();
         }
 
-        FCogWindowWidgets::OpenObjectAssetButton(EffectPtr, ButtonsSize);
+        FCogWidgets::OpenObjectAssetButton(EffectPtr, ButtonsSize);
 
         ImGui::EndPopup();
     }
@@ -454,7 +458,7 @@ void FCogAbilityWindow_Effects::RenderStacks(const FActiveGameplayEffect& Active
         ImGui::PushStyleColor(ImGuiCol_PlotHistogram, IM_COL32(100, 100, 100, 255));
         ImGui::PushStyleColor(ImGuiCol_FrameBg, IM_COL32(0, 0, 0, 100));
         ImGui::SetNextItemWidth(-1);
-        ImGui::ProgressBar(CurrentStackCount / (float)Effect.StackLimitCount, ImVec2(FCogWindowWidgets::GetFontWidth() * 15, ImGui::GetTextLineHeightWithSpacing() * 0.8f), TCHAR_TO_ANSI(*FString::Printf(TEXT("%d / %d"), CurrentStackCount, Effect.StackLimitCount)));
+        ImGui::ProgressBar(CurrentStackCount / (float)Effect.StackLimitCount, ImVec2(FCogWidgets::GetFontWidth() * 15, ImGui::GetTextLineHeightWithSpacing() * 0.8f), TCHAR_TO_ANSI(*FString::Printf(TEXT("%d / %d"), CurrentStackCount, Effect.StackLimitCount)));
         ImGui::PopStyleColor(2);
     }
 }
@@ -487,7 +491,7 @@ void FCogAbilityWindow_Effects::RenderInhibition(const FActiveGameplayEffect& Ac
 {
     if (ActiveEffect.bIsInhibited)
     {
-        FCogWindowWidgets::SmallButton("Yes", ImVec4(1, 0, 0, 1));
+        FCogWidgets::SmallButton("Yes", ImVec4(1, 0, 0, 1));
     }
     else
     {

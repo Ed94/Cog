@@ -3,15 +3,7 @@
 #include "CogEngineDataAsset.h"
 #include "CogEngineReplicator.h"
 #include "CogImguiHelper.h"
-#include "CogWindowWidgets.h"
-
-//--------------------------------------------------------------------------------------------------------------------------
-void FCogEngineWindow_Spawns::Initialize()
-{
-    Super::Initialize();
-
-    Asset = GetAsset<UCogEngineDataAsset>();
-}
+#include "CogWidgets.h"
 
 //--------------------------------------------------------------------------------------------------------------------------
 void FCogEngineWindow_Spawns::RenderHelp()
@@ -21,6 +13,14 @@ void FCogEngineWindow_Spawns::RenderHelp()
         "The spawn list can be configured in the '%s' data asset. "
         , TCHAR_TO_ANSI(*GetNameSafe(Asset.Get()))
     );
+}
+
+//--------------------------------------------------------------------------------------------------------------------------
+void FCogEngineWindow_Spawns::Initialize()
+{
+    Super::Initialize();
+
+    Asset = GetAsset<UCogEngineDataAsset>();
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
@@ -47,24 +47,25 @@ void FCogEngineWindow_Spawns::RenderContent()
         return;
     }
 
+    int32 GroupIndex = 0;
     for (const FCogEngineSpawnGroup& SpawnGroup : Asset->SpawnGroups)
     {
-        RenderSpawnGroup(*Replicator, SpawnGroup);
+        RenderSpawnGroup(*Replicator, SpawnGroup, GroupIndex);
+        GroupIndex++;
     }
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
-void FCogEngineWindow_Spawns::RenderSpawnGroup(ACogEngineReplicator& Replicator, const FCogEngineSpawnGroup& SpawnGroup)
+void FCogEngineWindow_Spawns::RenderSpawnGroup(ACogEngineReplicator& Replicator, const FCogEngineSpawnGroup& SpawnGroup, int32 GroupIndex)
 {
-    if (FCogWindowWidgets::DarkCollapsingHeader(TCHAR_TO_ANSI(*SpawnGroup.Name), ImGuiTreeNodeFlags_DefaultOpen))
+    if (FCogWidgets::DarkCollapsingHeader(TCHAR_TO_ANSI(*SpawnGroup.Name), ImGuiTreeNodeFlags_DefaultOpen))
     {
-        int32 GroupIndex = 0;
         ImGui::PushID(GroupIndex);
 
         const bool PushColor = (SpawnGroup.Color != FColor::Transparent);
         if (PushColor)
         {
-            FCogWindowWidgets::PushBackColor(FCogImguiHelper::ToImVec4(SpawnGroup.Color));
+            FCogWidgets::PushBackColor(FCogImguiHelper::ToImVec4(SpawnGroup.Color));
         }
 
         static int32 SelectedAssetIndex = -1;
@@ -82,11 +83,10 @@ void FCogEngineWindow_Spawns::RenderSpawnGroup(ACogEngineReplicator& Replicator,
 
         if (PushColor)
         {
-            FCogWindowWidgets::PopBackColor();
+            FCogWidgets::PopBackColor();
         }
 
         ImGui::PopID();
-        GroupIndex++;
     }
 }
 
@@ -95,7 +95,7 @@ bool FCogEngineWindow_Spawns::RenderSpawnAsset(ACogEngineReplicator& Replicator,
 {
     bool IsPressed = false;
 
-    ImGui::PushStyleColor(ImGuiCol_Button, IsLastSelected ? ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive) : ImGui::GetStyleColorVec4(ImGuiCol_Button));
+    //ImGui::PushStyleColor(ImGuiCol_Button, IsLastSelected ? ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive) : ImGui::GetStyleColorVec4(ImGuiCol_Button));
     ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.0f, 0.5f));
 
     FString EntryName;
@@ -115,7 +115,7 @@ bool FCogEngineWindow_Spawns::RenderSpawnAsset(ACogEngineReplicator& Replicator,
     }
 
     ImGui::PopStyleVar(1);
-    ImGui::PopStyleColor(1);
+    //ImGui::PopStyleColor(1);
 
     return IsPressed;
 }

@@ -13,9 +13,9 @@ class COGABILITY_API UCogAbilityCheat_Execution_ApplyEffect
     GENERATED_BODY()
 
 public:
-    void Execute_Implementation(const AActor* Instigator, const TArray<AActor*>& Targets) const override;
+    virtual void Execute_Implementation(const UObject* WorldContextObject, const AActor* Instigator, const TArray<AActor*>& Targets) const override;
 
-    ECogEngineCheat_ActiveState IsActiveOnTargets_Implementation(const TArray<AActor*>& Targets) const override;
+    virtual ECogEngineCheat_ActiveState IsActiveOnTargets_Implementation(const UObject* WorldContextObject, const TArray<AActor*>& Targets) const override;
 
     virtual bool GetColor(const FCogWindow& InCallingWindow, FLinearColor& OutColor) const override;
 

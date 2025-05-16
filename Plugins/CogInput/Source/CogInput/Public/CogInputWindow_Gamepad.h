@@ -25,9 +25,9 @@ public:
 
 protected:
 
-    virtual void ResetConfig() override;
+    virtual void PreBegin(ImGuiWindowFlags& WindowFlags) override;
 
-    virtual void PreRender(ImGuiWindowFlags& WindowFlags) override;
+    virtual void PostBegin() override;
 
     virtual void RenderContent() override;
 
@@ -36,7 +36,7 @@ protected:
     virtual void RenderButton(const FKey& Key, const ImVec2& Position, const ImVec2& Size, const ImVec2& Alignment, float Rounding, ImDrawFlags Flags = 0);
     
     virtual void RenderStick(const FKey& Key2D, const FKey& KeyBool, bool& InvertY, float& Sensitivity, float Amplitude, const ImVec2& Position, float Radius);
-    
+
     virtual void OnButtonClicked(FCogInputActionInfo* ActionInfo);
 
     virtual void RenderMainContextMenu();
@@ -44,6 +44,10 @@ protected:
     virtual void RenderButtonContextMenu(const FKey& Key, FCogInputActionInfo* ActionInfoButton);
 
     virtual void RenderStickContextMenu(const FKey& Key, FCogInputActionInfo* ActionInfo2D, bool& InvertY, float& Sensitivity);
+
+    virtual void TryRefreshActions();
+
+    static void ConstrainAspectRatio(ImGuiSizeCallbackData* InData);
 
     TObjectPtr<UCogInputConfig_Gamepad> Config;
 
@@ -73,6 +77,15 @@ public:
     UPROPERTY(Config)
     bool bShowAsOverlay = false;
 
+    UPROPERTY(Config)
+    bool bLockPosition = false;
+
+    UPROPERTY(Config)
+    FVector2f Alignment = FVector2f(0.0f, 0.0f);
+
+    UPROPERTY(Config)
+    FIntVector2 Padding = FIntVector2(10, 10);
+    
     UPROPERTY(Config)
     bool bInvertRightStickY = false;
 
@@ -112,8 +125,11 @@ public:
     virtual void Reset() override
     {
         Super::Reset();
-        
+
         bShowAsOverlay = false;
+        bLockPosition = false;
+        Alignment = { 0, 0 };
+        Padding = { 10, 10 };
         bInvertRightStickY = false;
         bInvertLeftStickY = false;
         LeftStickSensitivity = 5.0f;

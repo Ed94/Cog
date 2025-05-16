@@ -2,7 +2,7 @@
 
 #include "CogDebug.h"
 #include "CogImguiHelper.h"
-#include "CogWindowWidgets.h"
+#include "CogWidgets.h"
 #include "Engine/CollisionProfile.h"
 
 //--------------------------------------------------------------------------------------------------------------------------
@@ -28,24 +28,22 @@ void FCogEngineWindow_DebugSettings::Initialize()
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
-void FCogEngineWindow_DebugSettings::ResetConfig()
-{
-    Super::ResetConfig();
-
-    Config->Reset();
-}
-
-//--------------------------------------------------------------------------------------------------------------------------
 void FCogEngineWindow_DebugSettings::PreSaveConfig()
 {
     Super::PreSaveConfig();
 
+    if (Config == nullptr)
+    { return; }
+    
     Config->Data = FCogDebug::Settings;
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
 void RenderCollisionChannelColor(const UCollisionProfile& CollisionProfile, FColor& Color, ECollisionChannel Channel, ImGuiColorEditFlags ColorEditFlags)
 {
+	if (CollisionProfile.ConvertToObjectType(Channel) == TraceTypeQuery_MAX && CollisionProfile.ConvertToTraceType(Channel) == TraceTypeQuery_MAX)
+	{ return; }
+
     const FString ChannelName = CollisionProfile.ReturnChannelNameFromContainerIndex(Channel).ToString();
     FCogImguiHelper::ColorEdit4(StringCast<ANSICHAR>(*ChannelName).Get(), Color, ColorEditFlags);
 }
@@ -91,53 +89,53 @@ void FCogEngineWindow_DebugSettings::RenderContent()
 		ImGui::Checkbox("Text Shadow", &Settings.TextShadow);
 		ImGui::SetItemTooltip("Show a shadow below debug text.");
 
-		FCogWindowWidgets::SetNextItemToShortWidth();
+		FCogWidgets::SetNextItemToShortWidth();
 		ImGui::Checkbox("Fade 2D", &Settings.Fade2D);
 		ImGui::SetItemTooltip("Does the 2D debug is fading out.");
 
-		FCogWindowWidgets::SetNextItemToShortWidth();
+		FCogWidgets::SetNextItemToShortWidth();
 		ImGui::DragFloat("Duration", &Settings.Duration, 0.01f, 0.0f, 100.0f, "%.1f");
 		ImGui::SetItemTooltip("The duration of debug elements.");
 
-		FCogWindowWidgets::SetNextItemToShortWidth();
+		FCogWidgets::SetNextItemToShortWidth();
 		ImGui::DragFloat("Thickness", &Settings.Thickness, 0.05f, 0.0f, 5.0f, "%.1f");
 		ImGui::SetItemTooltip("The thickness of debug lines.");
 
-		FCogWindowWidgets::SetNextItemToShortWidth();
+		FCogWidgets::SetNextItemToShortWidth();
 		ImGui::DragFloat("Server Thickness", &Settings.ServerThickness, 0.05f, 0.0f, 5.0f, "%.1f");
 		ImGui::SetItemTooltip("The thickness the server debug lines.");
 
-		FCogWindowWidgets::SetNextItemToShortWidth();
+		FCogWidgets::SetNextItemToShortWidth();
 		ImGui::DragFloat("Server Color Mult", &Settings.ServerColorMultiplier, 0.01f, 0.0f, 1.0f, "%.1f");
 		ImGui::SetItemTooltip("The color multiplier applied to the server debug lines.");
 
-		FCogWindowWidgets::SetNextItemToShortWidth();
+		FCogWidgets::SetNextItemToShortWidth();
 		ImGui::DragInt("Depth Priority", &Settings.DepthPriority, 0.1f, 0, 100);
 		ImGui::SetItemTooltip("The depth priority of debug elements.");
 
-		FCogWindowWidgets::SetNextItemToShortWidth();
+		FCogWidgets::SetNextItemToShortWidth();
 		ImGui::DragInt("Segments", &Settings.Segments, 0.1f, 4, 20.0f);
 		ImGui::SetItemTooltip("The number of segments used for circular shapes.");
 
-		FCogWindowWidgets::SetNextItemToShortWidth();
+		FCogWidgets::SetNextItemToShortWidth();
 		ImGui::DragFloat("Axes Scale", &Settings.AxesScale, 0.1f, 0, 10.0f, "%.1f");
 		ImGui::SetItemTooltip("The scaling debug axis.");
 
-		FCogWindowWidgets::SetNextItemToShortWidth();
+		FCogWidgets::SetNextItemToShortWidth();
 		ImGui::DragFloat("Arrow Size", &Settings.ArrowSize, 1.0f, 0.0f, 200.0f, "%.0f");
 		ImGui::SetItemTooltip("The size of debug arrows.");
 
-		FCogWindowWidgets::SetNextItemToShortWidth();
+		FCogWidgets::SetNextItemToShortWidth();
 		ImGui::DragFloat("Text Size", &Settings.TextSize, 0.1f, 0.1f, 5.0f, "%.1f");
 		ImGui::SetItemTooltip("The size of the debug texts.");
     }
 
 	if (ImGui::CollapsingHeader("Recolor", ImGuiTreeNodeFlags_DefaultOpen))
     {
-        FCogWindowWidgets::SetNextItemToShortWidth();
+        FCogWidgets::SetNextItemToShortWidth();
 
         ECogDebugRecolorMode Mode = Settings.RecolorMode;
-        if (FCogWindowWidgets::ComboboxEnum("Recolor mode", Mode))
+        if (FCogWidgets::ComboboxEnum("Recolor mode", Mode))
         {
             Settings.RecolorMode = Mode;
         }
@@ -145,7 +143,7 @@ void FCogEngineWindow_DebugSettings::RenderContent()
 
         if (Settings.RecolorMode != ECogDebugRecolorMode::None)
         {
-            FCogWindowWidgets::SetNextItemToShortWidth();
+            FCogWidgets::SetNextItemToShortWidth();
             ImGui::DragFloat("Recolor Intensity", &Settings.RecolorIntensity, 0.01f, 0.0f, 1.0f, "%.2f");
             ImGui::SetItemTooltip("How much the debug elements color should be changed.");
         }
@@ -156,13 +154,13 @@ void FCogEngineWindow_DebugSettings::RenderContent()
         }
         else if (Settings.RecolorMode == ECogDebugRecolorMode::HueOverTime)
         {
-            FCogWindowWidgets::SetNextItemToShortWidth();
+            FCogWidgets::SetNextItemToShortWidth();
             ImGui::DragFloat("Recolor Speed", &Settings.RecolorTimeSpeed, 0.1f, 0.0f, 10.0f, "%.1f");
             ImGui::SetItemTooltip("The speed of the recolor.");
         }
         else if (Settings.RecolorMode == ECogDebugRecolorMode::HueOverFrames)
         {
-            FCogWindowWidgets::SetNextItemToShortWidth();
+            FCogWidgets::SetNextItemToShortWidth();
             ImGui::DragInt("Recolor Cycle", &Settings.RecolorFrameCycle, 1, 2, 100);
             ImGui::SetItemTooltip("How many frames are used to perform a full hue cycle.");
         }
@@ -174,92 +172,95 @@ void FCogEngineWindow_DebugSettings::RenderContent()
 
         ImGui::Checkbox("Use Local Space", &Settings.GizmoUseLocalSpace);
 
-        FCogWindowWidgets::SetNextItemToShortWidth();
-        ImGui::DragFloat("Gizmo Scale", &Settings.GizmoScale, 0.1f, 0.1f, 10.0f, "%.1f");
+    	ImGui::Checkbox("Support Context Menu", &Settings.GizmoSupportContextMenu);
+    	ImGui::SetItemTooltip("Does right clicking on the gizmo displays a context menu ?");
+
+        FCogWidgets::SetNextItemToShortWidth();
+        ImGui::DragFloat("Scale", &Settings.GizmoScale, 0.1f, 0.1f, 10.0f, "%.1f");
         ImGui::SetItemTooltip("The scale of the gizmo.");
 
-        FCogWindowWidgets::SetNextItemToShortWidth();
+        FCogWidgets::SetNextItemToShortWidth();
         ImGui::DragInt("Z Low", &Settings.GizmoZLow, 0.5f, 0, 1000);
 
-        FCogWindowWidgets::SetNextItemToShortWidth();
+        FCogWidgets::SetNextItemToShortWidth();
         ImGui::DragInt("Z High", &Settings.GizmoZHigh, 0.5f, 0, 1000);
 
-        FCogWindowWidgets::SetNextItemToShortWidth();
+        FCogWidgets::SetNextItemToShortWidth();
         ImGui::DragFloat("Thickness Z Low", &Settings.GizmoThicknessZLow, 0.1f, 0.0f, 10.0f, "%.1f");
 
-        FCogWindowWidgets::SetNextItemToShortWidth();
+        FCogWidgets::SetNextItemToShortWidth();
         ImGui::DragFloat("Thickness Z High", &Settings.GizmoThicknessZHigh, 0.1f, 0.0f, 10.0f, "%.1f");
 
-        FCogWindowWidgets::SetNextItemToShortWidth();
+        FCogWidgets::SetNextItemToShortWidth();
         ImGui::DragFloat("Mouse Max Distance", &Settings.GizmoCursorSelectionThreshold, 0.1f, 0.0f, 50.0f, "%.1f");
 
         ImGui::SeparatorText("Translation");
 
-        FCogWindowWidgets::SetNextItemToShortWidth();
+        FCogWidgets::SetNextItemToShortWidth();
         ImGui::Checkbox("Translation Snap Enable", &Settings.GizmoTranslationSnapEnable);
 
-        FCogWindowWidgets::SetNextItemToShortWidth();
+        FCogWidgets::SetNextItemToShortWidth();
         ImGui::DragFloat("Translation Snap", &Settings.GizmoTranslationSnapValue, 0.1f, 0.0f, 1000.0f, "%.1f");
 
-        FCogWindowWidgets::SetNextItemToShortWidth();
+        FCogWidgets::SetNextItemToShortWidth();
         ImGui::DragFloat("Translation Axis Length", &Settings.GizmoTranslationAxisLength, 0.1f, 0.1f, 500.0f, "%.1f");
 
-        FCogWindowWidgets::SetNextItemToShortWidth();
+        FCogWidgets::SetNextItemToShortWidth();
         ImGui::DragFloat("Translation Plane Offset", &Settings.GizmoTranslationPlaneOffset, 0.1f, 0.0f, 500.0f, "%.1f");
 
-        FCogWindowWidgets::SetNextItemToShortWidth();
+        FCogWidgets::SetNextItemToShortWidth();
         ImGui::DragFloat("Translation Plane Extent", &Settings.GizmoTranslationPlaneExtent, 0.1f, 0.0f, 100.0f, "%.1f");
 
         ImGui::SeparatorText("Rotation");
 
-        FCogWindowWidgets::SetNextItemToShortWidth();
+        FCogWidgets::SetNextItemToShortWidth();
         ImGui::Checkbox("Rotation Snap Enable", &Settings.GizmoRotationSnapEnable);
 
-        FCogWindowWidgets::SetNextItemToShortWidth();
+        FCogWidgets::SetNextItemToShortWidth();
         ImGui::DragFloat("Rotation Snap", &Settings.GizmoRotationSnapValue, 0.1f, 0.0f, 360.0f, "%.1f");
 
-        FCogWindowWidgets::SetNextItemToShortWidth();
+        FCogWidgets::SetNextItemToShortWidth();
         ImGui::DragFloat("Rotation Speed", &Settings.GizmoRotationSpeed, 0.01f, 0.01f, 100.0f, "%.2f");
 
-        FCogWindowWidgets::SetNextItemToShortWidth();
+        FCogWidgets::SetNextItemToShortWidth();
         ImGui::DragFloat("Rotation Radius", &Settings.GizmoRotationRadius, 0.1f, 0.1f, 500.0f, "%.1f");
 
-        FCogWindowWidgets::SetNextItemToShortWidth();
+        FCogWidgets::SetNextItemToShortWidth();
         ImGui::DragInt("Rotation Segments", &Settings.GizmoRotationSegments, 0.5f, 2, 12);
 
         ImGui::SeparatorText("Scale");
 
-        FCogWindowWidgets::SetNextItemToShortWidth();
+        FCogWidgets::SetNextItemToShortWidth();
         ImGui::Checkbox("Scale Snap Enable", &Settings.GizmoScaleSnapEnable);
 
-        FCogWindowWidgets::SetNextItemToShortWidth();
+        FCogWidgets::SetNextItemToShortWidth();
         ImGui::DragFloat("Scale Snap", &Settings.GizmoScaleSnapValue, 0.1f, 0.0f, 10.0f, "%.1f");
 
-        FCogWindowWidgets::SetNextItemToShortWidth();
+        FCogWidgets::SetNextItemToShortWidth();
         ImGui::DragFloat("Scale Box Offset", &Settings.GizmoScaleBoxOffset, 0.0f, 0.0f, 500.0f, "%.1f");
 
-        FCogWindowWidgets::SetNextItemToShortWidth();
+        FCogWidgets::SetNextItemToShortWidth();
         ImGui::DragFloat("Scale Box Extent", &Settings.GizmoScaleBoxExtent, 0.1f, 0.0f, 100.0f, "%.1f");
 
-        FCogWindowWidgets::SetNextItemToShortWidth();
+        FCogWidgets::SetNextItemToShortWidth();
         ImGui::DragFloat("Scale Speed", &Settings.GizmoScaleSpeed, 0.01f, 0.01f, 100.0f, "%.2f");
 
-        FCogWindowWidgets::SetNextItemToShortWidth();
+        FCogWidgets::SetNextItemToShortWidth();
         ImGui::DragFloat("Scale Min", &Settings.GizmoScaleMin, 0.001f, 0.001f, 1.0f, "%.3f");
 
         ImGui::SeparatorText("Ground Raycast");
 
-        FCogWindowWidgets::SetNextItemToShortWidth();
+        FCogWidgets::SetNextItemToShortWidth();
         ImGui::DragFloat("Ground Raycast Length", &Settings.GizmoGroundRaycastLength, 10.0f, 0.0f, 1000000.0f, "%.0f");
 
-        FCogWindowWidgets::SetNextItemToShortWidth();
+        FCogWidgets::SetNextItemToShortWidth();
         ECollisionChannel Channel = Settings.GizmoGroundRaycastChannel.GetValue();
-        if (FCogWindowWidgets::ComboCollisionChannel("Channel", Channel))
+        if (FCogWidgets::ComboTraceChannel("Channel", Channel))
         {
             Settings.GizmoGroundRaycastChannel = Channel;
         }
 
-        FCogWindowWidgets::SetNextItemToShortWidth();
+        FCogWidgets::SetNextItemToShortWidth();
         ImGui::DragFloat("Ground Raycast Circle Radius", &Settings.GizmoGroundRaycastCircleRadius, 0.1f, 0.1f, 1000.0f, "%.1f");
 
         FCogImguiHelper::ColorEdit4("Ground Raycast Color", Settings.GizmoGroundRaycastColor, ColorEditFlags);
@@ -297,12 +298,7 @@ void FCogEngineWindow_DebugSettings::RenderContent()
             RenderCollisionChannelColor(*CollisionProfile, Settings.ChannelColorPhysicsBody, ECC_PhysicsBody, ColorEditFlags);
             RenderCollisionChannelColor(*CollisionProfile, Settings.ChannelColorVehicle, ECC_Vehicle, ColorEditFlags);
             RenderCollisionChannelColor(*CollisionProfile, Settings.ChannelColorDestructible, ECC_Destructible, ColorEditFlags);
-            RenderCollisionChannelColor(*CollisionProfile, Settings.ChannelColorEngineTraceChannel1, ECC_EngineTraceChannel1, ColorEditFlags);
-            RenderCollisionChannelColor(*CollisionProfile, Settings.ChannelColorEngineTraceChannel2, ECC_EngineTraceChannel2, ColorEditFlags);
-            RenderCollisionChannelColor(*CollisionProfile, Settings.ChannelColorEngineTraceChannel3, ECC_EngineTraceChannel3, ColorEditFlags);
-            RenderCollisionChannelColor(*CollisionProfile, Settings.ChannelColorEngineTraceChannel4, ECC_EngineTraceChannel4, ColorEditFlags);
-            RenderCollisionChannelColor(*CollisionProfile, Settings.ChannelColorEngineTraceChannel5, ECC_EngineTraceChannel5, ColorEditFlags);
-            RenderCollisionChannelColor(*CollisionProfile, Settings.ChannelColorEngineTraceChannel6, ECC_EngineTraceChannel6, ColorEditFlags);
+        	
             RenderCollisionChannelColor(*CollisionProfile, Settings.ChannelColorGameTraceChannel1, ECC_GameTraceChannel1, ColorEditFlags);
             RenderCollisionChannelColor(*CollisionProfile, Settings.ChannelColorGameTraceChannel2, ECC_GameTraceChannel2, ColorEditFlags);
             RenderCollisionChannelColor(*CollisionProfile, Settings.ChannelColorGameTraceChannel3, ECC_GameTraceChannel3, ColorEditFlags);
@@ -350,11 +346,11 @@ void FCogEngineWindow_DebugSettings::RenderContent()
         ImGui::Checkbox("Draw Hit Impact Normals", &Settings.CollisionQueryDrawHitImpactNormals);
         ImGui::SetItemTooltip("Draw the hit impact normal of hit results.");
 
-        FCogWindowWidgets::SetNextItemToShortWidth();
+        FCogWidgets::SetNextItemToShortWidth();
         ImGui::DragFloat("Primitive Actors Name Size", &Settings.CollisionQueryHitPrimitiveActorsNameSize, 0.1f, 0.5f, 10.0f, "%0.1f");
         ImGui::SetItemTooltip("Size of the actor name of the primitives that have been hit.");
 
-        FCogWindowWidgets::SetNextItemToShortWidth();
+        FCogWidgets::SetNextItemToShortWidth();
         ImGui::DragFloat("Hit Point Size", &Settings.CollisionQueryHitPointSize, 0.5f, 0.0f, 100.0f, "%0.1f");
         ImGui::SetItemTooltip("Size of the hit result location and impact point.");
 

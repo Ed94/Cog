@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> The way Cog integrates in your project has been simplified. If you update Cog, please read the [integration guide](#Integrating-Cog-in-your-project).
+
 # Cog
 
 ## FORK OF ORIGINAL
@@ -14,11 +17,11 @@ Cog is a set of debug tools for Unreal Engine built on top of [Dear ImGui](https
 ![Cog](https://github.com/arnaud-jamin/Cog/assets/13844285/21659aea-2cd8-4ef6-b3b0-5795f5f3246b)
 
 - [Video](https://www.youtube.com/watch?v=ea5hz3cFcMM)
-- [Sample Executable (Windows)](https://drive.google.com/file/d/1T7jQFoZ5rd6goBtDH-FCbjn6Kr1RzUCE/view?usp=sharing) (300 MB)
+- [Sample Executable (Windows)](https://drive.google.com/file/d/1T7jQFoZ5rd6goBtDH-FCbjn6Kr1RzUCE/view?usp=sharing) (500 MB)
 
 Cog provides:
 - ImGui windows to inspect and configure various Unreal systems (Core Engine, Enhanced Inputs, Gameplay Abilities, AI)
-- Window mangement with persistent configuration and layouts.
+- Window management with persistent configuration and layouts.
 - C++ and Blueprint functions to log and debug draw within Log Categories.
 - Control over the server regarding debug draw, logging, spawning, cheats.
 - NetImgui support to ease the debugging of game server.
@@ -27,7 +30,7 @@ General Info:
 - Cog can be used both in editor and package builds. It is disabled by default on shipping builds.
 - Press the `[F1]` key or use the `Cog.ToggleInput` console command to open the ImGui Main Menu.
 - Many windows display their contents based on a selected actor. The selector actor can be chosen using the `Engine/Selection` window or widget.
-- Widgets such as Stats (FPS, Ping), or Actor Selection, can be added in the main menu bar from the 'Window/Widgets" menu.
+- Widgets such as Stats (FPS, Ping), Time Scale, Actor Selection, Console, can be added in the main menu bar from the `Window/Widgets` menu.
 
 ## Cog Windows
 
@@ -35,52 +38,83 @@ General Info:
 
 Displays the gameplay abilities of the selected actor.
 
-[![Abilities](https://github.com/arnaud-jamin/Cog/assets/13844285/cc6cb2af-eb9a-42fd-8ae5-80b5c7b361e9)]()
+![Abilities](https://github.com/user-attachments/assets/b332cf3a-9fee-408f-a86e-157c513c0ee2)
 - Click the ability checkbox to force its activation or deactivation.
-- Right click an ability to remove it, or open/close the ability separate window.
+- Right-click an ability to remove it, or open/close the ability separate window.
 - Use the 'Give Ability' menu to manually give an ability from a list defined in a Data Asset.
+
+---
 
 ### Actions
 Displays the state of Input Action.
 
-![Actions](https://github.com/arnaud-jamin/Cog/assets/13844285/6323e78b-2ee4-43e2-bec6-19aa15716d2c)
+![Actions](https://github.com/user-attachments/assets/e4b60f69-efa0-4a23-b78e-9f261e5f78f5)
 - Can be used to inject inputs to help debugging, as loosing window focus when breaking in the code doesn't affect the state of injected inputs unlike real inputs.
-- The display input action are read from a Input Mapping Context defined in a Data Asset.
+
+https://github.com/user-attachments/assets/2497900e-d2d9-4af9-abef-44f7f31c2726
+
+---
 
 ### Attributes
 Displays the gameplay attributes of the selected actor.
 
-![Attributes](https://github.com/arnaud-jamin/Cog/assets/13844285/a6329ef1-f775-4e6e-9581-6389f9f4b39c)
+![Attributes](https://github.com/user-attachments/assets/ff010ac5-d8e5-44ca-b46f-263c45a0fc47)
 - Attributes can be sorted by name, category or attribute set.
 - Attributes with the Current value greater than the Base value are displayed in green.
 - Attributes with the Current value lower than the Base value are displayed in red.
 - Use the options 'Show Only Modified' to only show the attributes that have modifiers.
+
+---
 
 ### Behavior Tree
 Displays the behavior tree of the selected actor.
 
 ![Behavior Tree](https://github.com/arnaud-jamin/Cog/assets/13844285/c799e85f-b641-4d6f-9476-54a5cbd73c65)
 
+---
+
 ### Blackboard 
 Displays the blackboard of the selected actor.
 
 ![Blackboard](https://github.com/arnaud-jamin/Cog/assets/13844285/649d46d5-386c-4990-9f45-e4eb95a6b81a)
 
+---
+
+### Build Info 
+Display the build information such as the build version, changelist, date, target, and so on.
+
+![image](https://github.com/user-attachments/assets/b0383dea-a372-4ce2-94e2-6e1f9d3d6807)
+
+---
+
 ### Cheats
 Used to apply cheats to the selected actor.
 
-![Cheats](https://github.com/arnaud-jamin/Cog/assets/13844285/b7b89635-7924-49b7-98c0-311199947dfc)
-- The cheats are gameplay effects configured in a data asset.
+![Cheats](https://github.com/user-attachments/assets/e3bbf157-904f-40e9-a0bf-e8152ff24af4)
+- Cheats are replicated to the game server to be executed.
 - Key modifiers can be used to change which actor should be affected by the cheat:
   - `[CTRL]` Apply the cheat to the controlled actor
   - `[ALT]` Apply the cheat to the allies of the selected actor
   - `[SHIFT]` Apply the cheat to the enemies of the selected actor
+- Optionally, cheats applied to the local player character are automatically reapplied.
+
+![Cheats Settings](https://github.com/user-attachments/assets/006c4cf0-34e2-4e0d-8be7-be27db8796aa)
+
+- Cheats can be defined in a Data Asset. Cog provide two default cheat execution (Apply Effect, Activate Ability).
+- Cheat executions can be defined in blueprint.
+
+![Cheats Asset](https://github.com/user-attachments/assets/46a14b89-ebab-4628-b97b-e5ccd2b63576)
+
+---
 
 ### Collisions Tester
-Used to test a collision query
+Used to test collision queries
 
 ![Collisions Tester](https://github.com/arnaud-jamin/Cog/assets/13844285/12f7cb7e-13c9-4eed-8ea4-f3eb7475cf34)
 ![Collisions Tester](https://github.com/arnaud-jamin/Cog/assets/13844285/4d01fd01-d0b3-41a7-9344-662f190ebaf0)
+<video src="https://github.com/user-attachments/assets/95106f62-8a70-43ed-871d-c2f9380418a3" />
+
+---
 
 ### Collisions Viewer
 Used to inspect collisions in the world 
@@ -89,26 +123,43 @@ Used to inspect collisions in the world
 - The query can be configured in the options.
 - It can be used to better understand what object collisions are blocking a raycast.
 
+---
+
 ### Command Bindings
 Used to configure the command bindings. 
         
 ![Command Bindings](https://github.com/arnaud-jamin/Cog/assets/13844285/47179de9-ee28-427f-951f-5773b66cdeb2)
 - Bindings are used to trigger console commands from a keyboard shortcuts, which are saved in `Saved/Config/WindowEditor/Input.ini` (in editor).
-- Can be used to register the shortcuts Cog console commands:
-  - `Cog.ToggleInput`
-  - `Cog.LoadLayout <LayoutIndex>`
-  - `Cog.ToggleSelectionMode`
+
+---
+
+### Console
+Used as a replacement of the Unreal console command.
+
+![Console](https://github.com/user-attachments/assets/224b8913-61fb-4a63-b63a-fc3522fafe5f)
+- The console exist as a window and a widget (placed in main menu bar).
+- The console widget can optionally get the keyboard focus when the main menu bar is shown.
+- Use the Keys Up/Down or Tab/Shift-Tab to navigate in the command list.
+- The console settings can be changed in the console window menu, or by right-clicking the widget.
+
+![Console Settings](https://github.com/user-attachments/assets/92bd2e0e-e860-403d-ade3-e780fb3a88c7)
+
+---
 
 ### Debug Settings
 Used to tweak how the debug display is drawn.
 
 ![Debug Settings](https://github.com/arnaud-jamin/Cog/assets/13844285/1c078311-2395-45e6-9a13-ddc405e1c914)
 
+---
+
 ### Effects
 Displays the gameplay effects of the selected actor.
 
-![Effects](https://github.com/arnaud-jamin/Cog/assets/13844285/4fffa8fe-bd93-44bc-8ca5-27ae81f5da0c)
+![Effects](https://github.com/user-attachments/assets/ff9c0baa-80d8-4916-a81a-9914443bd88b)
 - Mouse over an effect to see its details such as its modifiers, the gameplay tags it grants, the remaining time, etc.
+
+---
 
 ### Gamepad
 Display the state of the gamepad
@@ -117,6 +168,10 @@ Display the state of the gamepad
 - Can be displayed as an overlay
 - Can be used to inject inputs to help debugging, as loosing window focus when breaking in the code doesn't affect the state of injected inputs unlike real inputs.
 
+https://github.com/user-attachments/assets/56edc823-7130-4cfe-9af9-1c565f7286b9
+
+---
+
 ### Inspector
 Used to inspect and modify an Object properties 
 
@@ -124,6 +179,15 @@ Used to inspect and modify an Object properties
 - Inspect the selected actor by default 
 - Favorites can be added with a custom function defining what happens when the user press the Apply button (typically this can be used to modify and apply the Game User Settings)
 - Manage a history of inspected objects.
+
+---
+
+### Levels
+Can be used to load specific levels
+
+![image](https://github.com/user-attachments/assets/473ea0c8-05c6-4246-b295-995d4c43b6af)
+
+---
 
 ### Log Categories
 Can be used to activate and deactivate log categories
@@ -135,6 +199,8 @@ Can be used to activate and deactivate log categories
 - A client can modify the verbosity of the server.
 - The log categories are used to filter both the output log and the debug draw.
 
+---
+
 ### Metric
 Gather various values sent by the selected actor and compute their rate per second. This is typically used to compute the damage dealt or received per second.
 
@@ -145,10 +211,14 @@ Gather various values sent by the selected actor and compute their rate per seco
 FCogDebugMetric::AddMetric(this, "Damage Dealt", MitigatedDamage, UnmitigatedDamage, false);
 ```
 
+---
+
 ### Net Emulation
 Used to configure the network emulation
 
 ![Net Emulation](https://github.com/arnaud-jamin/Cog/assets/13844285/97103f15-fae8-4fe9-8189-8fdbcab5cb20)
+
+---
 
 ### NetImgui
 Handle connections to a [NetImgui](https://github.com/sammyfreg/netImgui) server.
@@ -159,17 +229,35 @@ The following image shows the editor running along a dedicated server. The NetIm
 This can be used to debug the state of the game server. For example the behavior trees are only available on the game server.
 ![image](https://github.com/user-attachments/assets/3cd788c9-9884-4c1c-8333-7a311bdcd20a)
 
+---
+
+### Notifications
+Use to display and configure notifications
+
+![Notification](https://github.com/user-attachments/assets/84db0359-f002-4c35-9d45-11187b3f9228)
+
+- Notification can be added by using the following macros: `COG_NOTIFY`, `COG_NOTIFY_WARNING`, or `COG_NOTIFY_ERROR`.
+- Notification settings can be used to adjust the filtering, their location, their size, etc.
+
+![Notification Settings](https://github.com/user-attachments/assets/aa47495e-4544-4e33-925e-d87cb9125e76)
+
+---
+
 ### Output Log
 Display the output log based on each log categories verbosity.
     
 ![Output Log](https://github.com/arnaud-jamin/Cog/assets/13844285/71b1de06-a3d0-4e4d-83f3-c3f482c0d8f4)
 - The verbosity of each log category can be configured in the 'Log Categories' window.
 
+---
+
 ### Pools
 Displays attributes of the selected actor as pools.
 
 ![Pools](https://github.com/arnaud-jamin/Cog/assets/13844285/7bb1aadd-9c0b-439f-b263-5ed842d0cd69)
 - The pools can be configured in a data asset.
+
+---
 
 ### Plots 
 Plots values and events overtime. When applicable, only the values and events of the selected actor are displayed.
@@ -178,66 +266,96 @@ Plots values and events overtime. When applicable, only the values and events of
 - The following code shows how to plot values and events:
 ```cpp
     // Plotting a value
-    FCogDebugPlot::PlotValue(this, "Speed", Velocity.Length());
+    FCogDebug::Plot(this, "Speed", Velocity.Length());
 
     // Starting an event
-    FCogDebugPlot::PlotEvent(this, "Effects", GameplayEffectSpec.Def->GetFName(), GameplayEffectSpec.GetDuration() == 0.0f)
+    FCogDebug::StartEvent(this, "Effects", GameplayEffectSpec.Def->GetFName(), GameplayEffectSpec.GetDuration() == 0.0f)
                     .AddParam("Name", AbilitySystemComponent->CleanupName(GetNameSafe(GameplayEffectSpec.Def)))
                     .AddParam("Effect Instigator", GetNameSafe(GameplayEffectSpec.GetEffectContext().GetInstigator()))
                     .AddParam("Effect Level", GameplayEffectSpec.GetLevel())
                     .AddParam("Effect Duration", GameplayEffectSpec.GetDuration());
 
     // Stopping an event
-    FCogDebugPlot::PlotEventStop(this, "Effects", RemovedGameplayEffect.Spec.Def->GetFName());
+    FCogDebug::StopEvent(this, "Effects", RemovedGameplayEffect.Spec.Def->GetFName());
 ```
+
+---
 
 ### Scalability
 Used to configure the rendering quality.
 
 ![Scalability](https://github.com/arnaud-jamin/Cog/assets/13844285/4866b54c-5efa-4efa-a841-74ac8e1713c0)
+       
+---
+
+### Selection
+Used to select an actor either by picking an actor in the world or by selecting an actor in the actor list.
+
+![Selection](https://github.com/arnaud-jamin/Cog/assets/13844285/67cf9019-85c0-449f-88bf-0fc4841f8795)
+- The actor list can be filtered by actor type (Actor, Character, etc.).
+- The current selection is used by various debug windows to filter out their content.
+
+---
+
+### Settings
+Configure the settings of Cog.
+
+![Settings](https://github.com/user-attachments/assets/6587d44d-bf40-4ff1-8d26-71f79a3110f2)
+- Configure how ImGui behaves
+- Change the visibility and ordering of the widgets appearing in the main menu bar
+- Change Cog Shortcuts
+- Change the DPI Scaling. Use `[Ctrl][MouseWheel]` to change the DPI.
+
+---
 
 ### Skeleton
 Display the bone hierarchy and the skeleton debug draw of the selected actor if it has a Skeletal Mesh.
 
 ![Skeleton](https://github.com/arnaud-jamin/Cog/assets/13844285/19648e3d-70dc-45bc-940d-e53eb9a99871)
 - Mouse over a bone to highlight it.
-- Right click a bone to access more debug display.
-- Use the [Ctrl] key to toggle the bone debug draw recursively.
-        
-### Selection
-Used to select an actor either by picking an actor in the world or by selecting an actor in the actor list.
+- Right-click a bone to access more debug display.
+- Use the `[Ctrl]` key to toggle the bone debug draw recursively.
 
-![Selection](https://github.com/arnaud-jamin/Cog/assets/13844285/67cf9019-85c0-449f-88bf-0fc4841f8795)
-- The actor list can be filtered by actor type (Actor, Character, etc).
-- The current selection is used by various debug windows to filter out their content.
-
-### Settings
-Configure the settings of Cog Windows.
-
-![Settings](https://github.com/arnaud-jamin/Cog/assets/13844285/edd6a701-9a50-41fa-b7df-90fd11cc2937)
-- Can configure the input key to toggle the input focus between the game and imgui
-- Can change the DPI Scaling
+---
 
 ### Spawn
 Used to spawn new actors in the world. The spawn list can be configured in a Data Asset.
 
 ![Spawn](https://github.com/arnaud-jamin/Cog/assets/13844285/b37f9307-5fd5-4ea5-9652-c265a8f63e32)
 
+---
+
 ### Stats
 Displays engine stats such as FPS, Ping, Packet Loss.
 
-![Stats](https://github.com/arnaud-jamin/Cog/assets/13844285/e394ec7b-02fa-4b09-879b-90c82bd542ef)
+![Stats](https://github.com/user-attachments/assets/424bac6a-76df-4d69-9d34-445a4a4bf536)
+
+- Stats can be viewed as a widget in the main menu bar.
+- Clicking on the stat provide a menu to force the stat to a reach a specific value.
+- Right-clicking the stat display the settings, where the specific stat values can be defined.
+
+![Stats Settings](https://github.com/user-attachments/assets/a3545a8f-e742-4e8e-8758-03af133d932e)
+
+---
 
 ### Tags
 Displays the gameplay tags of the selected actor.
 
-![Tags](https://github.com/arnaud-jamin/Cog/assets/13844285/3f14be3f-77f2-4d59-887d-1245fc97ed6a)
+![Tags](https://github.com/user-attachments/assets/9aef871c-5af0-4ee0-8eb8-5fd706b43e51)
+
+---
 
 ### Time Scale
-Used to change the game global time scale. 
+Used to change the game global timescale. 
 
-![Time Scale](https://github.com/arnaud-jamin/Cog/assets/13844285/d19198c5-37dd-400d-a09f-7a5077eb2511)
-- If changed on a client the time scale is also modified on the game server, and replicated to the other clients.
+![Time Scale](https://github.com/user-attachments/assets/fc5a49e7-a04d-42b3-9d83-a8290e261665)
+- If changed on a client the timescale is also modified on the game server, and replicated to the other clients.
+- Time Scale can be viewed as a widget in the main menu bar.
+- Right-clicking the Time Scale display the settings, where the specific Time Scale values can be defined.
+
+![image](https://github.com/user-attachments/assets/130f6250-af5b-41fb-8ae2-016c66fbdedc)
+
+---
 
 ### Transform
 Used to read and set the selected actor transform. 
@@ -247,12 +365,16 @@ Used to read and set the selected actor transform.
 
 ![Transform](https://github.com/arnaud-jamin/Cog/assets/13844285/34657828-9fda-4af4-bdd0-4ea4514c23a0)
 
+---
+
 ### Tweaks
 Used to apply tweaks to all the spawned actors
 
 ![Tweaks](https://github.com/arnaud-jamin/Cog/assets/13844285/e8a5cdd5-908d-4ae3-901a-48addd4ce353)
 - The tweaks are used to test various gameplay settings by actor category
 - The tweaks can be configured in a data asset.
+
+---
 
 ## Debug Functionalities
 
@@ -281,19 +403,23 @@ You must have Unreal 5.5 or greater and Visual Studio to launch the sample
 
 ### Integrating Cog in your project
 
+> [!IMPORTANT]
+> The way Cog integrates in your project has been simplified. If you didn't modify Cog sources, you should remove all your existing Cog source files before updating. If you did modify Cog sources and still have a `CogWindow` folder, consider deleting it before updating.
+
 The Cog repository has the following structure:
 - `CogSample` - A Sample that demonstrate various Cog functionalities. The project was saved in Unreal 5.5
 - `Plugins/CogAbility` - ImGui windows for the Gameplay Ability System (Abilities, Effects, Tags, ...)
 - `Plugins/CogAI` - ImGui windows for AI (Behavior Tree, Blackboard)
 - `Plugins/CogInput` - ImGui windows for the Enhanced Input library (Input action, Gamepad)
 - `Plugins/Cog` - The main Cog plugin which contains the following modules
-  - `CogEngine` - ImGui windows for the core unreal engine functionalities (Log, Stats, Time, Collisions, Skeleton, ...)
-  - `CogWindow` - ImGui window management (Base Window, Layout)
-  - `CogDebug` - Debug functionalities (Log, Debug Draw, Plot, Metric, ...)
-  - `CogImGui` - Integration of Imgui for Unreal, inspired by [UnrealImGui](https://github.com/segross/UnrealImGui)
+  - `Cog` - Cog Subsystem (Manage windows, menu, settings, layout, ...)
   - `CogCommon` - Interfaces implemented by your project actor classes which cannot be excluded from a shipping build
+  - `CogDebug` - Debug functionalities (Log, Debug Draw, Plot, Metric, ...)
+  - `CogEngine` - ImGui windows for the core unreal engine functionalities (Log, Stats, Time, Collisions, Skeleton, ...)
+  - `CogImGui` - Cog own integration of Imgui for Unreal, inspired by [UnrealImGui](https://github.com/segross/UnrealImGui)
 - `Plugins/CogAll` - Only contains a utility function to easily add all the built-in windows from all the Cog plugins. Useful for projects that do not need to exclude some plugins. 
-  
+- `Plugins/CogCommonUI` - Contains an implementation of CommonUIActionRouterBase to let the Cog shortcuts work while in a CommonUI menu. Only use this plugin if you use CommonUI.
+    
 Cog has multiple plugins to ease the integration for projects that do not use the `Ability System Component` or `Enhanced Input`. For the next steps, it is assumed all the plugins are used.
 
 - Setup up module dependencies:
@@ -326,6 +452,7 @@ public class CogSample : ModuleRules
         {
             PublicDependencyModuleNames.AddRange(new string[]
             {
+                "Cog",
                 "CogAbility",
                 "CogAI",
                 "CogAll",
@@ -333,117 +460,97 @@ public class CogSample : ModuleRules
                 "CogEngine",
                 "CogImgui",
                 "CogInput",
-                "CogWindow",
             });
         }
     }
 }
 ```
 
+- Add a world subsystem to your project to configure which windows to add in the main menu. Use `CogSampleConfigurationSubsystem` as a template.  
 
-- In the class of your choice (in the sample we use the GameState class) add a reference to the CogWindowManager:
+`CogSampleConfigurationSubsystem.h`
 ```cpp
-// ACogSampleGameState.h
 #pragma once
 
-#include "CoreMinimal.h"
-#include "CogCommon.h"
-#include "GameFramework/GameStateBase.h"
-#include "CogSampleGameState.generated.h"
-
-class UCogWindowManager;
+#include "Subsystems/WorldSubsystem.h"
+#include "CogSampleConfigurationSubsystem.generated.h"
 
 UCLASS()
-class ACogSampleGameState : public AGameStateBase
+class UCogSampleConfigurationSubsystem : public UWorldSubsystem
 {
     GENERATED_BODY()
+public:
+    
+    virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
+    virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+    virtual void PostInitialize() override;
 
-    [...]
-
-    // To make sure it doesn't get garbage collected.
+private:
     UPROPERTY()
-    TObjectPtr<UObject> CogWindowManagerRef = nullptr;
-
-#if ENABLE_COG
-    TObjectPtr<UCogWindowManager> CogWindowManager = nullptr;
-#endif //ENABLE_COG
+    TWeakObjectPtr<USubsystem> CogSubsystem;
 };
 ```
 
-
-- Instantiate the CogWindowManager and add some windows:
+`CogSampleConfigurationSubsystem.cpp`
 ```cpp
-// ACogSampleGameState.cpp
-void ACogSampleGameState::BeginPlay()
-{
-    Super::BeginPlay();
+#include "CogSampleConfigurationSubsystem.h"
+
+#include "CogCommon.h"
 
 #if ENABLE_COG
-    CogWindowManager = NewObject<UCogWindowManager>(this);
-    CogWindowManagerRef = CogWindowManager;
+#include "CogAll.h"
+#include "CogSampleWindow_Team.h"
+#include "CogSubsystem.h"
+#endif
 
-    // Add all the built-in windows
-    Cog::AddAllWindows(*CogWindowManager);
-
-    // Add a custom window
-    CogWindowManager->AddWindow<FCogSampleWindow_Team>("Gameplay.Team");
-
-    [...]
-#endif //ENABLE_COG
-}
-```
-
-- Tick the CogWindowManager:
-```cpp
-
-// ACogSampleGameState.cpp
-ACogSampleGameState::ACogSampleGameState(const FObjectInitializer & ObjectInitializer)
-    : Super(ObjectInitializer)
+bool UCogSampleConfigurationSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 {
-    // Enable ticking
-    PrimaryActorTick.bCanEverTick = true;
-    PrimaryActorTick.SetTickFunctionEnable(true);
-    PrimaryActorTick.bStartWithTickEnabled = true;
+    if (Super::ShouldCreateSubsystem(Outer) == false)
+    { return false; }
+
+#if ENABLE_COG
+    return true;
+#else
+    return false;
+#endif
+}
+
+void UCogSampleConfigurationSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+{
+    Super::Initialize(Collection);
+#if ENABLE_COG
+    CogSubsystem = Collection.InitializeDependency<UCogSubsystem>();
+#endif
+}
+
+void UCogSampleConfigurationSubsystem::PostInitialize() 
+{
+    Super::PostInitialize();
+
+#if ENABLE_COG
+    UCogSubsystem* CogSubsystemPtr = Cast<UCogSubsystem>(CogSubsystem.Get());
+    if (IsValid(CogSubsystemPtr) == false)
+    { return; }
+
+    // Add all the built-in windows. You can copy and paste this function code to organize the main menu differently.
+    Cog::AddAllWindows(*CogSubsystemPtr);
     
-    [...]
-}
-
-void ACogSampleGameState::Tick(float DeltaSeconds)
-{
-    Super::Tick(DeltaSeconds);
-
-#if ENABLE_COG
-    CogWindowManager->Tick(DeltaSeconds);
-#endif //ENABLE_COG
+    // Add a custom window
+    CogSubsystemPtr->AddWindow<FCogSampleWindow_Team>("Gameplay.Team");
+#endif
 }
 ```
 
-
-
-- In your PlayerController class, spawn the Cog Replicators. The Replicator are used to communicate between the client and the server, for example to apply cheats, spawn actors, etc.
-```cpp
-void ACogSamplePlayerController::BeginPlay()
-{
-    Super::BeginPlay();
-
-#if ENABLE_COG
-    // Spawn the Replicator of each plugin
-    ACogDebugReplicator::Spawn(this);
-    ACogAbilityReplicator::Spawn(this);
-    ACogEngineReplicator::Spawn(this);
-#endif //ENABLE_COG
-}
-```
+> [!NOTE]
+> The reason you need to manually add this code is because you can customize which windows are displayed in the main menu, and because all Cog code appart from the `CogCommon` module is stripped in `Shipping` build.
 
 - Implement Cog Interfaces on your desired actor classes:
 ```cpp
 // CogSampleCharacter.h
 UCLASS(config=Game)
 class ACogSampleCharacter : public ACharacter
-    [...]
     , public ICogCommonDebugFilteredActorInterface
     , public ICogCommonAllegianceActorInterface
-    [...]
 ```
 
 ```cpp
@@ -456,13 +563,22 @@ class ACogSamplePlayerController
 
 - In Unreal Editor create and configure the following Data Assets:
   - CogAbilityDataAsset
-  - CogAIDataAsset
   - CogEngineDataAsset
-  - CogInputDataAsset
   
-![Data Assets](https://github.com/arnaud-jamin/Cog/assets/13844285/88384138-2ba7-43cf-a275-82f40503338e)
+![Data Assets](https://github.com/user-attachments/assets/4dcbd8c6-e0de-44a0-bcb2-29c76f165029)
 
-![Data Assets](https://github.com/arnaud-jamin/Cog/assets/13844285/cbda8065-c921-41a6-b06e-4302d8c72989)
+![Data Assets](https://github.com/user-attachments/assets/aea5a38e-fca4-44b7-b8e6-bee397ef5242)
 
-![Data Assets](https://github.com/arnaud-jamin/Cog/assets/13844285/1f4f3255-4104-4dfc-ab9e-fd34335c0289)
+![Data Assets](https://github.com/user-attachments/assets/7382b272-7561-45ca-9401-05107198657a)
 
+- Reference the added Data Assets in the project Asset Manager for them to be found in package mode:
+
+![Data Assets](https://github.com/user-attachments/assets/39d0fcc2-1e82-4bb7-aa5e-0661ed9ab58b)
+
+
+
+
+## Screenshots
+
+Cog integrated in Lyra:
+![Lyra](https://github.com/user-attachments/assets/cf432ac3-0fd5-4875-aa29-35161abd8dcc)
