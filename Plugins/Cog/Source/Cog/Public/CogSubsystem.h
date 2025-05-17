@@ -4,6 +4,8 @@
 #include "CogHelper.h"
 #include "CogImguiContext.h"
 #include "CogWindow_Settings.h"
+#include "Components/InputComponent.h"
+
 #include "imgui.h"
 #include "Subsystems/WorldSubsystem.h"
 

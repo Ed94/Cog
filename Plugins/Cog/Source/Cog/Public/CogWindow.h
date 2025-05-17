@@ -14,6 +14,7 @@ class APlayerController;
 class UCogSubsystem;
 class ULocalPlayer;
 class UWorld;
+class UInputComponent;
 
 class COG_API FCogWindow
 {
