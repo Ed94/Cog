@@ -6,6 +6,8 @@ public class CogImgui : ModuleRules
 	public CogImgui(ReadOnlyTargetRules Target) : base(Target)
 	{
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+        
+        OptimizeCode = CodeOptimization.Never;
 
         PublicDependencyModuleNames.AddRange(new[]
         {

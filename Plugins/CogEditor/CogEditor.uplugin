@@ -1,0 +1,31 @@
+﻿{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "Cog Editor",
+	"Description": "Cog: Editor Plugin for usage outside of the game viewport",
+	"Category": "Other",
+	"CreatedBy": "Edward R. Gonzalez",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": false,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules":
+	[
+		{
+			"Name": "CogEditor",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "Cog",
+			"Enabled": true
+		}
+	]
+}

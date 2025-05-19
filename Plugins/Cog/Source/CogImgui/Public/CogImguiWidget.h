@@ -7,7 +7,7 @@
 #include "Widgets/DeclarativeSyntaxSupport.h"
 #include "Widgets/SLeafWidget.h"
 
-class FCogImguiContext;
+class ICogImguiContext;
 class SWindow;
 class UGameViewportClient;
 
@@ -19,7 +19,7 @@ class COGIMGUI_API SCogImguiWidget : public SLeafWidget
 public:
 
     SLATE_BEGIN_ARGS(SCogImguiWidget) {}
-        SLATE_ARGUMENT(FCogImguiContext*, Context)
+        SLATE_ARGUMENT(ICogImguiContext*, Context)
     SLATE_END_ARGS()
 
     void Construct(const FArguments& InArgs);
@@ -68,7 +68,7 @@ protected:
 
     void RefreshVisibility();
 
-    FCogImguiContext* Context = nullptr;
+    ICogImguiContext* Context = nullptr;
 
     TSharedPtr<SWindow> Window = nullptr;
 

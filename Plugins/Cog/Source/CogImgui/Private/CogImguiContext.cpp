@@ -24,6 +24,16 @@
 #include "Widgets/SWindow.h"
 
 //--------------------------------------------------------------------------------------------------------------------------
+FCogImGuiContextScope::FCogImGuiContextScope(ICogImguiContext& CogImguiContext)
+{
+    PrevContext = ImGui::GetCurrentContext();
+    PrevPlotContext = ImPlot::GetCurrentContext();
+
+    ImGui::SetCurrentContext(CogImguiContext.GetImGuiContext());
+    ImPlot::SetCurrentContext(CogImguiContext.GetImPlotContext());
+}
+
+//--------------------------------------------------------------------------------------------------------------------------
 FCogImGuiContextScope::FCogImGuiContextScope(const FCogImguiContext& CogImguiContext)
 {
     PrevContext = ImGui::GetCurrentContext();
@@ -455,7 +465,7 @@ void FCogImguiContext::ImGui_CreateWindow(ImGuiViewport* Viewport)
         return;
     }
 
-    FCogImguiContext* Context = ParentViewportData->Context;
+    FCogImguiContext* Context = (FCogImguiContext*)ParentViewportData->Context;
 
     const bool bTooltipWindow = (Viewport->Flags & ImGuiViewportFlags_TopMost);
     const bool bPopupWindow = (Viewport->Flags & ImGuiViewportFlags_NoTaskBarIcon);
@@ -512,7 +522,7 @@ void FCogImguiContext::ImGui_CreateWindow(ImGuiViewport* Viewport)
     ViewportData->Widget = Widget;
     ViewportData->Window = Window;
 
-    ParentViewportData->Context->WindowToViewportMap.Add(Window, Viewport->ID);
+    Context->WindowToViewportMap.Add(Window, Viewport->ID);
 
     Viewport->PlatformRequestResize = false;
 }

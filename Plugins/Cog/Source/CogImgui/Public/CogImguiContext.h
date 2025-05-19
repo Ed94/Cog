@@ -6,6 +6,7 @@
 #include "Templates/SharedPointer.h"
 #include "UObject/StrongObjectPtr.h"
 
+class ICogImguiContext;
 class FCogImguiContext;
 class IInputProcessor;
 class SCogImguiWidget;
@@ -25,69 +26,109 @@ struct COGIMGUI_API FCogImGuiViewportData
 	TWeakPtr<SCogImguiWidget> Widget = nullptr;
 };
 
+class COGIMGUI_API ICogImguiContext 
+{
+public:
+	virtual ~ICogImguiContext() {};
+
+	virtual TObjectPtr<const UGameViewportClient> GetGameViewport() const PURE_VIRTUAL(GetGameViewport, return(nullptr); ); 
+	virtual TSharedPtr<const SCogImguiWidget> GetMainWidget() const PURE_VIRTUAL(GetMainWidget, return(nullptr); );
+	
+	virtual ImGuiContext* GetImGuiContext() PURE_VIRTUAL(GetImGuiContext, return nullptr; ); 
+	virtual ImPlotContext* GetImPlotContext() PURE_VIRTUAL(GetImPlotContext, return nullptr; );
+
+	virtual bool GetEnableInput() const PURE_VIRTUAL(GetEnableInput, return false; );
+	virtual void SetEnableInput(bool InValue) PURE_VIRTUAL(SetEnableInput);
+
+	virtual bool GetShareKeyboard() const PURE_VIRTUAL(GetEnableKeyboard, return false; );
+	virtual void SetShareKeyboard(bool InValue) PURE_VIRTUAL(SetShareKeyboard);
+
+	virtual bool GetShareMouse() const PURE_VIRTUAL(GetShareMouse, return false; );
+	virtual void SetShareMouse(bool InValue) PURE_VIRTUAL(SetShareMouse);
+
+	virtual bool GetShareMouseWithGameplay() const PURE_VIRTUAL(GetShareMouseWithGameplay, return false; );
+	virtual void SetShareMouseWithGameplay(bool InValue) PURE_VIRTUAL(SetShareMouseWithGameplay);
+	
+	virtual bool GetWantCaptureMouse() const PURE_VIRTUAL(GetWantCaptureMouse, return(false); );
+
+	virtual float GetDPIScale() const PURE_VIRTUAL(GetDPIScale, return(0.0f); );
+	virtual void SetDPIScale(float Value) PURE_VIRTUAL(SetDPIScale);
+	
+	virtual bool BeginFrame(float InDeltaTime) PURE_VIRTUAL(BeginFrame, return false; );
+	virtual void EndFrame() PURE_VIRTUAL(EndFrame);
+	
+	virtual ImVec2 GetImguiMousePos() const PURE_VIRTUAL(GetImguiMousePos, return ImVec2{}; ); 
+	
+	virtual bool GetSkipRendering() const PURE_VIRTUAL(GetSkipRendering, return(false); ); 
+	virtual void SetSkipRendering(bool skip) PURE_VIRTUAL(SkipRendering);
+	
+	virtual void SaveSettings() const PURE_VIRTUAL(SaveSettings);
+	virtual void Shutdown() PURE_VIRTUAL(Shutdown);
+
+	virtual void OnImGuiWidgetFocusLost() PURE_VIRTUAL(OnImGuiWidgetFocusLost);
+};
 
 struct COGIMGUI_API FCogImGuiContextScope
 {
+	UE_NODISCARD_CTOR explicit FCogImGuiContextScope(ICogImguiContext& CogImguiContext);
 	UE_NODISCARD_CTOR explicit FCogImGuiContextScope(const FCogImguiContext& CogImguiContext);
 	UE_NODISCARD_CTOR explicit FCogImGuiContextScope(ImGuiContext* GuiCtx, ImPlotContext* PlotCtx);
 	~FCogImGuiContextScope();
 
-private:
+protected:
 	ImGuiContext* PrevContext = nullptr;
 	ImPlotContext* PrevPlotContext = nullptr;
 };
 
-class COGIMGUI_API FCogImguiContext : public TSharedFromThis<FCogImguiContext>
+class COGIMGUI_API FCogImguiContext 
+	:	public TSharedFromThis<FCogImguiContext>
+	,	public ICogImguiContext
 {
 public:
 
+#pragma region ICogImguiContext
+	bool BeginFrame(float InDeltaTime) override;
+	void EndFrame() override;
+	
+	ImGuiContext* GetImGuiContext() override { return Context; }
+	ImPlotContext* GetImPlotContext() override { return PlotContext; }
+
+	TObjectPtr<const UGameViewportClient> GetGameViewport() const override { return GameViewport; }
+	TSharedPtr<const SCogImguiWidget> GetMainWidget() const override { return MainWidget; }
+	
+	bool GetEnableInput() const override { return bEnableInput; }
+	void SetEnableInput(bool InValue) override;
+	
+	bool GetShareKeyboard() const override { return bShareKeyboard; }
+	void SetShareKeyboard(bool Value) override { bShareKeyboard = Value; }
+	
+	bool GetShareMouse() const override { return bShareMouse; }
+	void SetShareMouse(bool Value) override;
+	
+	void SetShareMouseWithGameplay(bool Value) override;
+	bool GetShareMouseWithGameplay() const override { return bShareMouseWithGameplay; }
+	
+	ImVec2 GetImguiMousePos() const override;
+	
+	bool GetWantCaptureMouse() const override { return bWantCaptureMouse; }
+	
+	float GetDPIScale() const override { return DpiScale; }
+	void SetDPIScale(float Value) override;
+
+	bool GetSkipRendering() const override;
+	void SetSkipRendering(bool Value) override;
+	
+	void Shutdown() override;
+	void SaveSettings() const override;
+
+	void OnImGuiWidgetFocusLost() override;
+#pragma endregion ICogImguiContext
+
 	void Initialize(UGameViewportClient* InGameViewport);
-
-	void Shutdown();
-
-	void SaveSettings() const;
-
-	bool GetEnableInput() const { return bEnableInput; }
-
-	void SetEnableInput(bool InValue);
-
-	bool GetWantCaptureMouse() const { return bWantCaptureMouse; }
-
-	bool GetShareMouse() const { return bShareMouse; }
-
-	void SetShareMouse(bool Value);
-
-	bool GetShareMouseWithGameplay() const { return bShareMouseWithGameplay; }
-
-	void SetShareMouseWithGameplay(bool Value);
-
-	bool GetShareKeyboard() const { return bShareKeyboard; }
-
-	void SetShareKeyboard(bool Value) { bShareKeyboard = Value; }
-
-	bool BeginFrame(float InDeltaTime);
-
-	void EndFrame();
-
-	float GetDpiScale() const { return DpiScale; }
-
-	void SetDPIScale(float Value);
-
-	bool GetSkipRendering() const;
-
-	void SetSkipRendering(bool Value);
-
-	ImVec2 GetImguiMousePos() const;
-
-	TObjectPtr<const UGameViewportClient> GetGameViewport() const { return GameViewport; }
-
-	TSharedPtr<const SCogImguiWidget> GetMainWidget() const { return MainWidget; }
-
-	void OnImGuiWidgetFocusLost();
 
 	static bool GetIsNetImguiInitialized() { return bIsNetImGuiInitialized; }
 
-private:
+protected:
 
 	friend struct FCogImGuiContextScope;
 
@@ -186,5 +227,4 @@ private:
 	bool bRetakeFocus = false;
 
 	static bool bIsNetImGuiInitialized;
-
 };

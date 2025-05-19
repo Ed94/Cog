@@ -6,6 +6,8 @@ public class CogCommon : ModuleRules
 	{
         bUseUnity = false;
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+        
+        OptimizeCode = CodeOptimization.Never;
 		
 		PublicIncludePaths.AddRange(
 			new string[] {

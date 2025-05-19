@@ -15,11 +15,12 @@ FCogWindow_Layouts::FCogWindow_Layouts()
 //--------------------------------------------------------------------------------------------------------------------------
 void FCogWindow_Layouts::RenderContent()
 {
-    const UPlayerInput* PlayerInput = FCogImguiInputHelper::GetPlayerInput(*GetWorld());
-    if (PlayerInput == nullptr)
-    {
-        return;
-    }
+	bool bIsEditor = GetWorld()->IsEditorWorld();
+	const UPlayerInput* PlayerInput = FCogImguiInputHelper::GetPlayerInput(*GetWorld());
+	if (bIsEditor == false && PlayerInput == nullptr)
+	{
+		return;
+	}
 
     if (ImGui::MenuItem("Reset Window Layout"))
     {

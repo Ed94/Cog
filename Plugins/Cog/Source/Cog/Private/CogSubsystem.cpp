@@ -70,10 +70,12 @@ void UCogSubsystem::TryInitialize(UWorld& World)
     { return; }
 
     UE_LOG(LogCogImGui, Verbose, TEXT("UCogSubsystem::TryInitialize | World:%s %p"), *World.GetName(), &World);
-    
-    Context.Initialize(WorldContext->GameViewport.Get());
 
-    FCogImGuiContextScope ImGuiContextScope(Context);
+	Context = MakeUnique<FCogImguiContext>();
+	FCogImguiContext& ImguiCtx = * (FCogImguiContext*)(Context.Get());
+    ImguiCtx.Initialize(WorldContext->GameViewport.Get());
+
+    FCogImGuiContextScope ImGuiContextScope(* Context);
     
     ImGuiSettingsHandler IniHandler;
     IniHandler.TypeName = "Cog";
@@ -174,11 +176,16 @@ void UCogSubsystem::TryInitialize(UWorld& World)
 //--------------------------------------------------------------------------------------------------------------------------
 void UCogSubsystem::Shutdown()
 {
-    FCogImGuiContextScope ImGuiContextScope(Context);
+    FCogConsoleCommandManager::UnregisterAllWorldConsoleCommands(GetWorld());
+	
+	if (Context.IsValid() == false) {
+		return;
+	}
+	FCogImGuiContextScope ImGuiContextScope(* Context);
 
     if (bIsInitialized)
     {
-        Context.SaveSettings();
+        Context->SaveSettings();
     }
     
     for (FCogWindow* Window : Windows)
@@ -190,10 +197,8 @@ void UCogSubsystem::Shutdown()
 
     if (bIsInitialized)
     {
-        Context.Shutdown();
+        Context->Shutdown();
     }
-    
-    FCogConsoleCommandManager::UnregisterAllWorldConsoleCommands(GetWorld());
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
@@ -246,7 +251,7 @@ void UCogSubsystem::Tick(float InDeltaTime)
         return;
     }
 
-    FCogImGuiContextScope ImGuiContextScope(Context);
+    FCogImGuiContextScope ImGuiContextScope(GetContext());
 
     UpdatePlayerControllers(*World);
 
@@ -275,12 +280,12 @@ void UCogSubsystem::Tick(float InDeltaTime)
     }
 
     const bool ShouldSkipRendering = NetImgui::IsConnected() && bIsSelectionModeActive == false;
-    Context.SetSkipRendering(ShouldSkipRendering);
+    GetContext().SetSkipRendering(ShouldSkipRendering);
 
-    if (Context.BeginFrame(InDeltaTime))
+    if (GetContext().BeginFrame(InDeltaTime))
     {
         Render(InDeltaTime);
-        Context.EndFrame();
+        Context->EndFrame();
     }
 }
 
@@ -360,7 +365,7 @@ void UCogSubsystem::UpdatePlayerControllers(UWorld& World)
 //--------------------------------------------------------------------------------------------------------------------------
 void UCogSubsystem::Render(float DeltaTime)
 {
-    FCogImGuiContextScope ImGuiContextScope(Context);
+    FCogImGuiContextScope ImGuiContextScope(GetContext());
     
     ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0, 0, 0, 0));
     ImGui::DockSpaceOverViewport(0, nullptr, ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_NoDockingOverCentralNode | ImGuiDockNodeFlags_AutoHideTabBar);
@@ -376,12 +381,12 @@ void UCogSubsystem::Render(float DeltaTime)
     // There is no need to have Imgui input enabled if the imgui rendering 
     // is only done on the NetImgui server. So we disable imgui input.
     //----------------------------------------------------------------------
-    if (Context.GetEnableInput() && NetImgui::IsConnected() && bIsSelectionModeActive == false)
+    if (Context->GetEnableInput() && NetImgui::IsConnected() && bIsSelectionModeActive == false)
     {
-        Context.SetEnableInput(false);
+        Context->SetEnableInput(false);
     }
 
-    if ((Context.GetEnableInput() || NetImgui::IsConnected()) && bIsSelectionModeActive == false)
+    if ((Context->GetEnableInput() || NetImgui::IsConnected()) && bIsSelectionModeActive == false)
     {
         RenderMainMenu();
     }
@@ -459,7 +464,7 @@ FCogWindow* UCogSubsystem::FindWindowByID(const ImGuiID ID)
 //--------------------------------------------------------------------------------------------------------------------------
 void UCogSubsystem::ResetLayout()
 {
-    FCogImGuiContextScope ImGuiContextScope(Context);
+    FCogImGuiContextScope ImGuiContextScope(* Context);
 
     for (const FCogWindow* Window : Windows)
     {
@@ -492,7 +497,7 @@ void UCogSubsystem::LoadLayout(const int32 LayoutIndex)
 //--------------------------------------------------------------------------------------------------------------------------
 void UCogSubsystem::SaveLayout(const int32 LayoutIndex)
 {
-    FCogImGuiContextScope ImGuiContextScope(Context);
+    FCogImGuiContextScope ImGuiContextScope(* Context);
 
 	const FString Filename = *FCogImguiHelper::GetIniFilePath(FString::Printf(TEXT("imgui_layout_%d"), LayoutIndex));
     ImGui::SaveIniSettingsToDisk(TCHAR_TO_ANSI(*Filename));
@@ -1010,14 +1015,14 @@ const UObject* UCogSubsystem::GetAsset(const TSubclassOf<UObject>& AssetClass) c
 void UCogSubsystem::ToggleInputMode()
 {
     UE_LOG(LogCogImGui, Verbose, TEXT("UCogSubsystem::ToggleInputMode"));
-    Context.SetEnableInput(!Context.GetEnableInput());
+    Context->SetEnableInput(! Context->GetEnableInput());
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
 void UCogSubsystem::DisableInputMode()
 {
     UE_LOG(LogCogImGui, Verbose, TEXT("UCogSubsystem::DisableInputMode"));
-    Context.SetEnableInput(false);
+    Context->SetEnableInput(false);
 }
 
 //--------------------------------------------------------------------------------------------------------------------------
@@ -1028,9 +1033,9 @@ void UCogSubsystem::SetActivateSelectionMode(const bool Value)
 
     if (bIsSelectionModeActive)
     {
-        bIsInputEnabledBeforeEnteringSelectionMode = GetContext().GetEnableInput();
+        bIsInputEnabledBeforeEnteringSelectionMode = Context->GetEnableInput();
 
-        Context.SetEnableInput(true);
+        Context->SetEnableInput(true);
     }
     else
     {

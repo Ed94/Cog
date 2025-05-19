@@ -153,16 +153,21 @@ FReply SCogImguiWidget::HandleKeyEvent(const FKeyEvent& KeyEvent, bool Down) con
         return FReply::Unhandled();
     }
 
-    if (const UWorld* World = Context->GetGameViewport()->GetWorld())
-    {
-        if (const UPlayerInput* PlayerInput = FCogImguiInputHelper::GetPlayerInput(*World))
-        {
-            if (FCogImguiInputHelper::IsTopPriorityKeyEvent(*PlayerInput, KeyEvent))
-            {
-                return FReply::Unhandled();
-            }
-        }
-    }
+	// TODO(Ed): Do we need a better way to know when the context is definitely an Cog Editor?
+	bool bIsEditor = Context->GetGameViewport() == nullptr;
+	if (bIsEditor == false)
+	{
+		if (const UWorld* World = Context->GetGameViewport()->GetWorld())
+		{
+			if (const UPlayerInput* PlayerInput = FCogImguiInputHelper::GetPlayerInput(*World))
+			{
+				if (FCogImguiInputHelper::IsTopPriorityKeyEvent(*PlayerInput, KeyEvent))
+				{
+					return FReply::Unhandled();
+				}
+			}
+		}
+	}
 
     ImGuiIO& IO = ImGui::GetIO();
     IO.AddKeyEvent(FCogImguiInputHelper::ToImKey(KeyEvent.GetKey()), Down);

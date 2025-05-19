@@ -253,7 +253,7 @@ bool FCogWindow::IsWindowRenderedInMainMenu()
 //--------------------------------------------------------------------------------------------------------------------------
 float FCogWindow::GetDpiScale() const
 {
-    return GetOwner()->GetContext().GetDpiScale();
+    return GetOwner()->GetContext().GetDPIScale();
 }
 
 //--------------------------------------------------------------------------------------------------------------------------

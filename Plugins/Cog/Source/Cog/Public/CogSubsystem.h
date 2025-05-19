@@ -23,6 +23,7 @@ struct ImGuiSettingsHandler;
 struct ImGuiTextBuffer;
 struct FKey;
 
+
 //--------------------------------------------------------------------------------------------------------------------------
 UCLASS()
 class COG_API UCogSubsystem : public UTickableWorldSubsystem
@@ -82,9 +83,11 @@ public:
 
     void RebindShortcut(const UCogCommonConfig& InConfig, const FProperty& InProperty);
     
-    const FCogImguiContext& GetContext() const { return Context; }
-
-    FCogImguiContext& GetContext() { return Context; }
+	ICogImguiContext const& GetContext() const { return * Context; }
+	ICogImguiContext& GetContext() { return * Context; }
+	
+    //const FCogImguiContext& GetContext() const { return Context; }
+    //FCogImguiContext& GetContext() { return Context; }
 
     bool IsRenderingMainMenu() const { return bIsRenderingInMainMenu; }
 
@@ -192,7 +195,7 @@ protected:
 
     TWeakObjectPtr<UInputComponent> InputComponent;
 
-    FCogImguiContext Context;
+	TUniquePtr<ICogImguiContext> Context;
 
     TArray<FCogWindow*> Windows;
 

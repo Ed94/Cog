@@ -46,7 +46,7 @@ enum class ECogWidgetAlignment
 
 //--------------------------------------------------------------------------------------------------------------------------
 UCLASS(Config = Cog)
-class UCogWindowConfig_Settings : public UCogCommonConfig
+class COG_API UCogWindowConfig_Settings : public UCogCommonConfig
 {
     GENERATED_BODY()
 

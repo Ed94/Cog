@@ -6,6 +6,8 @@ public class Cog : ModuleRules
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 		
+		OptimizeCode = CodeOptimization.Never;
+		
 		PublicIncludePaths.AddRange(
 			new string[] {
 			}

@@ -31,7 +31,7 @@ void FCogWindow_Settings::Initialize()
 
     GetOwner()->GetContext().SetDPIScale(Config->DPIScale);
 
-    FCogImguiContext& Context = GetOwner()->GetContext();
+    ICogImguiContext& Context = GetOwner()->GetContext();
     Context.SetEnableInput(Config->bEnableInput);
     Context.SetShareKeyboard(Config->bShareKeyboard);
     Context.SetShareMouse(Config->bShareMouse);
@@ -52,7 +52,7 @@ void FCogWindow_Settings::PreSaveConfig()
     //Config->bNavEnableGamepad = IO.ConfigFlags & ImGuiConfigFlags_NavEnableGamepad;
     //Config->bNavNoCaptureInput = IO.ConfigFlags & ImGuiConfigFlags_NavNoCaptureKeyboard;
 
-    const FCogImguiContext& Context = GetOwner()->GetContext();
+    const ICogImguiContext& Context = GetOwner()->GetContext();
     Config->bEnableInput = Context.GetEnableInput();
     Config->bShareKeyboard = Context.GetShareKeyboard();
     Config->bShareMouse = Context.GetShareMouse();
@@ -62,14 +62,15 @@ void FCogWindow_Settings::PreSaveConfig()
 //--------------------------------------------------------------------------------------------------------------------------
 void FCogWindow_Settings::RenderContent()
 {
+	bool bIsEditor = GetWorld()->IsEditorWorld();
     const UPlayerInput* PlayerInput = FCogImguiInputHelper::GetPlayerInput(*GetWorld());
-    if (PlayerInput == nullptr)
+    if (bIsEditor == false && PlayerInput == nullptr)
     {
         return;
     }
     
     ImGuiIO& IO = ImGui::GetIO();
-    FCogImguiContext& Context = GetOwner()->GetContext();
+    ICogImguiContext& Context = GetOwner()->GetContext();
 
     //-------------------------------------------------------------------------------------------
     if (ImGui::CollapsingHeader("Input", ImGuiTreeNodeFlags_DefaultOpen))
